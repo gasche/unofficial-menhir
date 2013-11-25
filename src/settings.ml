@@ -149,6 +149,9 @@ let strict =
 let fixedexc =
   ref false
 
+let typed_values =
+  ref false
+
 type suggestion =
   | SuggestNothing
   | SuggestCompFlags
@@ -205,6 +208,7 @@ let options = Arg.align [
   "--table", Arg.Set table, " Use the table-based back-end";
   "--timings", Arg.Set timings, " Display internal timings";
   "--trace", Arg.Set trace, " Include tracing instructions in the generated code";
+  "--typed-values", Arg.Set typed_values, " Explicit typing of stack values";
   "--version", Arg.Set version, " Show version number and exit";
   "-b", Arg.Set_string base, "<basename> Synonymous with --base <basename>";
   "-lg", Arg.Set_int logG, " Synonymous with --log-grammar";
@@ -376,4 +380,7 @@ let strict =
 
 let fixedexc =
   !fixedexc
+
+let typed_values =
+  !typed_values
 

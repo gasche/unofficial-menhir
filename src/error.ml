@@ -114,4 +114,6 @@ let grammar_warning positions message =
 
 let () =
   if Settings.stepwise && not Settings.table then
-    error [] "--stepwise requires --table backend"
+    error [] "--stepwise requires --table backend";
+  if Settings.typed_values && not Settings.infer then
+    error [] "--typed-values requires --infer flag."
