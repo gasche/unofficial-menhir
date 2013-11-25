@@ -120,11 +120,31 @@ let reducecellcasts prod i symbol casts =
       | _ ->
           assert false
     in
-    (* Cast: [let id = ((Obj.magic id) : t) in ...]. *)
-    (
-      PVar id,
-      EAnnot (EMagic (EVar id), type2scheme t)
-    ) :: casts
+    begin
+      if not Settings.typed_values
+      then
+        (* Cast: [let id = ((Obj.magic id) : t) in ...]. *)
+        (
+          PVar id,
+          EAnnot (EMagic (EVar id), type2scheme t)
+        ) :: casts
+      else
+        (* Project: [let id = (match id with Nonterminal (NT'... id) -> id
+                                           | _ -> assert false)] *)
+        let cstr = match symbol with
+          | Symbol.T t -> "T_" ^ Terminal.print t
+          | Symbol.N n -> "N_" ^ Misc.normalize (Nonterminal.print true n)
+        in
+        (
+          PVar id,
+          EMatch (EVar id, [
+            { branchpat = PData ("Symbol", [PData (cstr, []); PVar id]);
+              branchbody = EVar id };
+            { branchpat = PWildcard;
+              branchbody = EApp (EVar "assert", [EVar "false"]) };
+          ])
+        ) :: casts
+    end
   else
     casts
 
@@ -197,6 +217,15 @@ let reducebody prod =
       let act =
         EAnnot (Action.to_il_expr action, type2scheme (semvtypent nt))
       in
+      let packed_semv =
+        if not Settings.typed_values
+         then ERepr (EVar semv)
+        else
+          let cstr =
+            "N_" ^ Misc.normalize (Nonterminal.print true (Production.nt prod))
+          in
+          EData ("Symbol", [EData (cstr, []); EVar semv])
+      in
 
       EComment (
         Production.print prod,
@@ -209,7 +238,7 @@ let reducebody prod =
 
           ERecord [                           (* new stack cell returned to the interpreter loop *)
             fstate, EVar state;               (* the current state after popping; it will be updated by [goto] *)
-            fsemv, ERepr (EVar semv);         (* the newly computed semantic value *)
+            fsemv, packed_semv;               (* the newly computed semantic value *)
             fstartp, EVar startp;             (* the newly computed start and end positions *)
             fendp, EVar endp;
             fnext, EVar stack;                (* this is the stack after popping *)
@@ -616,19 +645,35 @@ let token2terminal =
     (fun tok -> EIntConst (Terminal.t2i tok))
 
 let token2value =
-  destructuretokendef
-    "token2value"
-    tobj
-    true
-    (fun tok ->
-      ERepr (
-        match Terminal.ocamltype tok with
-        | None ->
-            EUnit
-        | Some _ ->
-            EVar semv
+  if not Settings.typed_values
+  then
+    destructuretokendef
+      "token2value"
+      tobj
+      true
+      (fun tok ->
+        ERepr (
+          match Terminal.ocamltype tok with
+          | None ->
+              EUnit
+          | Some _ ->
+              EVar semv
+        )
       )
-    )
+  else
+    destructuretokendef
+      "token2value"
+      (TypApp ("symbol", []))
+      true
+      (fun tok ->
+         let v =
+           match Terminal.ocamltype tok with
+           | None ->
+             EUnit
+           | Some _ ->
+             EVar semv
+         in
+         EData ("Symbol", [EData ("T_" ^ Terminal.print tok, []); v]))
 
 (* ------------------------------------------------------------------------ *)
 
@@ -721,21 +766,32 @@ let api : IL.valdef list =
           assert false (* every start symbol should carry a type *)
     in
 
+    let project v =
+      if Settings.typed_values
+      then
+        let cstr = "N_" ^ Misc.normalize (Nonterminal.print true nt) in
+        EMatch (v, [
+          { branchpat = PData ("Symbol", [PData (cstr, []); PVar "result"]);
+            branchbody = EVar "result"; };
+          { branchpat = PWildcard;
+            branchbody = EApp (EVar "assert", [EVar "false"]); };
+        ])
+      else
+        EAnnot (EMagic v, type2scheme t)
+    in
+
     define (
       Nonterminal.print true nt,
       EFun (
         [ PVar lexer; PVar lexbuf ],
-        EAnnot (
-          EMagic (
-            EApp (
-              EVar entry, [
-                EIntConst (Lr1.number state);
-                EVar lexer;
-                EVar lexbuf
-              ]
-            )
-          ),
-          type2scheme t
+        project (
+          EApp (
+            EVar entry, [
+              EIntConst (Lr1.number state);
+              EVar lexer;
+              EVar lexbuf
+            ]
+          )
         )
       )
     ) ::
