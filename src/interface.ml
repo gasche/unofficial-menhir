@@ -5,7 +5,7 @@ open TokenType
 
 include PreInterface
 
-let interface =
+let typedefs =
   if Settings.typed_values then
     let symbolclasstypedef =
       let add_n sym ocamltype datadefs =
@@ -54,13 +54,13 @@ let interface =
         typeprivate = false;
       }
     in
-    {
-      PreInterface.interface with
-
-      typedecls = tokentypedef @ [symbolclasstypedef; symboltypedef];
-    }
+    tokentypedef @ [symbolclasstypedef; symboltypedef]
   else
-    PreInterface.interface
+    tokentypedef
+
+let interface =
+  { PreInterface.interface with
+    typedecls = typedefs; }
 
 (* Writing the interface to a file. *)
 
