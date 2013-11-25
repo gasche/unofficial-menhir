@@ -1827,7 +1827,7 @@ let program = {
     [ excdef ];
 
   typedefs =
-    tokentypedef @
+    Interface.typedefs @
     [ envtypedef; statetypedef ];
 
   nonrecvaldefs =
