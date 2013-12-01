@@ -647,6 +647,7 @@ let tokendef1 = {
   typeparams = [];
   typerhs = TAbbrev ttoken;
   typeconstraint = None;
+  typeprivate = false;
 }
 
 let tokendef2 = {
@@ -654,6 +655,7 @@ let tokendef2 = {
   typeparams = [];
   typerhs = TAbbrev (TypApp (jeton, []));
   typeconstraint = None;
+  typeprivate = false;
 }
 
 (* Here is the application of [TableInterpreter.Make]. Note that the

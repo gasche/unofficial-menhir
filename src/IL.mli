@@ -74,7 +74,10 @@ and typedef = {
     typerhs: typedefrhs;
 
     (* Constraint. *)
-    typeconstraint: (typ * typ) option
+    typeconstraint: (typ * typ) option;
+
+    (* Private type. *)
+    typeprivate: bool;
 
   }
 

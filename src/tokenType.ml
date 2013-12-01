@@ -44,7 +44,8 @@ let tokentypedef =
     typename = tctoken;
     typeparams = [];
     typerhs = TDefSum datadefs;
-    typeconstraint = None
+    typeconstraint = None;
+    typeprivate = false;
   }
 
 (* Consult the command line options to determine what to do.
