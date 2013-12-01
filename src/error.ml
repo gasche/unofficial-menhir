@@ -110,3 +110,8 @@ let grammar_warning positions message =
   else
     warning positions message
 
+(* Check consistency of selected settings. *)
+
+let () =
+  if Settings.stepwise && not Settings.table then
+    error [] "--stepwise requires --table backend"
