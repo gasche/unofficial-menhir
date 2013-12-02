@@ -1,13 +1,9 @@
 (* This module instantiates the generic [Engine] with a thin decoding layer
    for the generated tables. Like [Engine], it is part of [MenhirLib]. *)
 
-(* The exception [Accept] is pre-declared here: this obviates the need
-   for generating its definition. The exception [Error] is declared
-   within the generated parser. This is preferable to pre-declaring it
-   here, as it ensures that each parser gets its own, distinct [Error]
-   exception. This is consistent with the code-based back-end. *)
-
-exception Accept of Obj.t
+(* The exception [Accept] is no longer pre-declared here: with --typed-values,
+   the Table backend now generates an exception parametrized over the type of
+   semantic values. *)
 
 (* This functor is invoked by the generated parser. *)
 
@@ -25,7 +21,7 @@ module Make (T : TableFormat.TABLES)
       int
 
   type semantic_value =
-      Obj.t
+    T.semantic_value
 
   let token2terminal =
     T.token2terminal
@@ -37,7 +33,7 @@ module Make (T : TableFormat.TABLES)
     T.error_terminal
 
   let error_value =
-    Obj.repr ()
+    T.error_value
 
   type production =
       int
@@ -89,11 +85,9 @@ module Make (T : TableFormat.TABLES)
     (* code = 1 + state *)
     code - 1
 
-  exception Accept =
-        Accept
+  exception Accept = T.Accept
 
-  exception Error =
-        T.Error
+  exception Error = T.Error
 
   type semantic_action =
     (state, semantic_value, token) EngineTypes.env ->
