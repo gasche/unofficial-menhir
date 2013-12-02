@@ -511,11 +511,11 @@ and scheme f scheme =
 (* ------------------------------------------------------------------------- *)
 (* Toplevel definition printer. *)
 
-let datavalparams f = function
+let datavalparams keyword f = function
   | [] ->
     ()
   | valparam :: valparams ->
-    fprintf f "%a%a" typ1 valparam (list typ1 times) valparams
+    fprintf f " %s %a%a" keyword typ1 valparam (list typ1 times) valparams
 
 let datatypeparams typename f = function
   | []   -> fprintf f "%s" typename
@@ -529,10 +529,10 @@ let datadef typename f def =
   | [], Some typs ->
     fprintf f " : %a" (datatypeparams typename) typs
   | params, None ->
-    fprintf f " of %a" datavalparams def.datavalparams
+    fprintf f "%a" (datavalparams "of") def.datavalparams
   | params, Some typs ->
-    fprintf f " : %a -> %a"
-      datavalparams def.datavalparams
+    fprintf f "%a -> %a"
+      (datavalparams ":") def.datavalparams
       (datatypeparams typename) typs
 
 let fielddef f def =
@@ -602,7 +602,7 @@ let directives =
 let excdef in_intf f def =
   match in_intf, def.excrhs with
   | _, ExcDecl params ->
-      fprintf f "%s%a%t%t" def.excname datavalparams params nl nl
+      fprintf f "%s%a%t%t" def.excname (datavalparams "of") params nl nl
   | true, ExcRebind _ ->
       fprintf f "%s%t%t" def.excname nl nl
   | false, ExcRebind s ->

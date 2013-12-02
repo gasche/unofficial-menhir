@@ -23,7 +23,7 @@ let make =
   tableInterpreter ^ ".Make"
 
 let accept =
-  tableInterpreter ^ ".Accept"
+  "Accept"
 
 let engineTypes =
   menhirlib ^ ".EngineTypes"
@@ -138,7 +138,8 @@ let reducecellcasts prod i symbol casts =
         (
           PVar id,
           EMatch (EVar id, [
-            { branchpat = PData ("Symbol", [PData (cstr, []); PVar id]);
+            { branchpat = PData ("Symbol", [PData (cstr, []);
+                                            PAnnot (PVar id, t)]);
               branchbody = EVar id };
             { branchpat = PWildcard;
               branchbody = EApp (EVar "assert", [EVar "false"]) };
@@ -694,6 +695,36 @@ let tokendef1 = {
   typeprivate = false;
 }
 
+let excaccept =
+  {
+    excname = "Accept";
+    excrhs = ExcDecl [
+        if Settings.typed_values then
+          TypApp ("symbol",[])
+        else
+          TypApp ("Obj.t",[])
+    ]
+  }
+
+let semtypedef =
+  if Settings.typed_values
+  then [
+    {
+      typename = "semantic_value";
+      typeparams = [];
+      typerhs = TAbbrev (TypApp ("symbol", []));
+      typeconstraint = None;
+      typeprivate = false;
+    } ]
+  else [
+    {
+      typename = "semantic_value";
+      typeparams = [];
+      typerhs = TAbbrev (TypApp ("Obj.t", []));
+      typeconstraint = None;
+      typeprivate = false;
+    } ]
+
 let tokendef2 = {
   typename = "token"; (* not [TokenType.tctoken], as it might carry an undesired prefix *)
   typeparams = [];
@@ -702,10 +733,14 @@ let tokendef2 = {
   typeprivate = false;
 }
 
+let error_value =
+  if Settings.typed_values
+  then EData ("Symbol", [EData ("Bottom",[]); EUnit])
+  else EApp (EVar "Obj.repr", [EUnit])
+
 (* Here is the application of [TableInterpreter.Make]. Note that the
    exception [Error], which is defined at toplevel, is re-defined
    within the functor argument: [exception Error = Error]. *)
-
 let application = {
 
   modulename =
@@ -716,14 +751,15 @@ let application = {
       MVar make,
       MStruct {
         struct_excdefs = [
-          excredef;
+          excaccept; excredef;
         ];
-        struct_typedefs = [
+        struct_typedefs = semtypedef @ [
           tokendef2;
         ];
         struct_nonrecvaldefs = [
           token2terminal;
           define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
+          define ("error_value", error_value);
           token2value;
           default_reduction;
           error;
@@ -771,7 +807,8 @@ let api : IL.valdef list =
       then
         let cstr = "N_" ^ Misc.normalize (Nonterminal.print true nt) in
         EMatch (v, [
-          { branchpat = PData ("Symbol", [PData (cstr, []); PVar "result"]);
+          { branchpat = PData ("Symbol", [PData (cstr, []);
+                                          PAnnot (PVar "result", t)]);
             branchbody = EVar "result"; };
           { branchpat = PWildcard;
             branchbody = EApp (EVar "assert", [EVar "false"]); };
@@ -835,7 +872,7 @@ let program = {
     [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
         \twith type token := token\n\
         \tand type state = int\n\
-        \tand type semantic_value = MenhirInterpreter.semantic_value)" ] @
+        \tand type semantic_value := MenhirInterpreter.semantic_value)" ] @
     Front.grammar.UnparameterizedSyntax.postludes
 
 }
