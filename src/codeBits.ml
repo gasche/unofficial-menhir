@@ -145,3 +145,6 @@ let tvprefix name =
     name
   else
     "ttv_" ^ name
+
+let ntmangle symbol =
+  "NT'" ^ Misc.normalize symbol
