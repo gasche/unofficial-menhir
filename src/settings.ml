@@ -152,6 +152,9 @@ let fixedexc =
 let typed_values =
   ref false
 
+let feed_nonterminal =
+  ref false
+
 type suggestion =
   | SuggestNothing
   | SuggestCompFlags
@@ -172,6 +175,7 @@ let options = Arg.align [
   "--error-recovery", Arg.Set recovery, " Attempt recovery by discarding tokens after errors";
   "--explain", Arg.Set explain, " Explain conflicts in <basename>.conflicts";
   "--external-tokens", Arg.String codeonly, "<module> Import token type definition from <module>";
+  "--feed-nonterminal", Arg.Set feed_nonterminal, " Also accept non-terminals as input. Require --typed-values";
   "--fixed-exception", Arg.Set fixedexc, " Declares Error = Parsing.Parse_error";
   "--follow-construction", Arg.Set follow, " (undocumented)";
   "--graph", Arg.Set graph, " Write grammar's dependency graph to <basename>.dot";
@@ -384,3 +388,5 @@ let fixedexc =
 let typed_values =
   !typed_values
 
+let feed_nonterminal =
+  !feed_nonterminal

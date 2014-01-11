@@ -10,8 +10,13 @@ include PreInterface
 (* Definitions to be exported for step-by-step engine interface. *)
 
 let steptypdefs =
+  let tokenkind =
+    if Settings.feed_nonterminal
+    then "semantic_value"
+    else "token"
+  in
   let tyenv = TypApp ("MenhirLib.EngineTypes.env", [
-      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp ("token",[]);
+      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp (tokenkind,[]);
     ])
   in
   [
@@ -50,7 +55,7 @@ let steptypdefs =
           { dataname = "Feed";
             datavalparams = [TypArrow (TypTuple [
                 TypApp ("Lexing.position",[]);
-                TypApp ("token",[]);
+                TypApp (tokenkind,[]);
                 TypApp ("Lexing.position",[]);
               ], TypApp ("step",[]))];
             datatypeparams = None
@@ -72,7 +77,7 @@ let typedefs =
     let nonterminaltypedef =
       let add_nt sym ocamltype datadefs =
         {
-          dataname = "NT'" ^ Misc.normalize sym;
+          dataname = ntmangle sym;
           datavalparams = [TypTextual ocamltype];
           datatypeparams = None;
         } :: datadefs
