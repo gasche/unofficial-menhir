@@ -49,11 +49,11 @@ let fnext =
 let fstack =
   field "stack"
 
+let ftoken =
+  field "token"
+
 let fcurrent =
   field "current"
-
-let flexbuf =
-  field "lexbuf"
 
 let fpreviouserror =
   field "previouserror"
@@ -160,7 +160,9 @@ let reducebody prod =
       if length > 0 then
         EVar (Printf.sprintf "_startpos_%s_" ids.(0))
       else
-        ERecordAccess(ERecordAccess (EVar env, flexbuf), flex_start_p)
+        ELet ([(PTuple [PVar "startpos"; PWildcard; PWildcard],
+                ERecordAccess (EVar env, ftoken))],
+              EVar "startpos")
     ) ::
     ( PVar endp,
       if length > 0 then

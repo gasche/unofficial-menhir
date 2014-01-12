@@ -36,10 +36,9 @@ module Make (T : TABLE) = struct
      previous token. If [env.shifted] has not yet reached its limit,
      it is incremented. *)
 
-  let discard env : (state, semantic_value, token) env =
-    let lexbuf = env.lexbuf in
-    let token = env.lexer lexbuf in
-    Log.lookahead_token lexbuf (T.token2terminal token);
+  let discard env token : (state, semantic_value, token) env =
+    let startp, token', endp = token in
+    Log.lookahead_token startp (T.token2terminal token') endp;
     let shifted = env.shifted + 1 in
     let shifted =
       if shifted >= 0
@@ -122,7 +121,7 @@ module Make (T : TABLE) = struct
        current state and the current lookahead token, in order to
        determine which action should be taken. *)
 
-    let token = env.token in
+    let _, token, _ = env.token in
     T.action
       env.current                    (* determines a row *)
       (T.token2terminal token)       (* determines a column *)
@@ -149,17 +148,16 @@ module Make (T : TABLE) = struct
 
     Log.shift terminal s';
 
-    let lexbuf = env.lexbuf in
-
     let env =
+      let startp, _, endp = env.token in
       { env with
         (* Push a new cell onto the stack, containing the identity of the
            state that we are leaving. *)
         stack = {
           state = env.current;
           semv = value;
-          startp = lexbuf.Lexing.lex_start_p;
-          endp = lexbuf.Lexing.lex_curr_p;
+          startp;
+          endp;
           next = env.stack;
         };
         (* Switch to state [s']. *)
@@ -223,7 +221,8 @@ module Make (T : TABLE) = struct
   and initiate env : result =
     assert (env.shifted >= 0);
     if T.recovery && env.shifted = 0 then begin
-      Log.discarding_last_token (T.token2terminal env.token);
+      let _, token, _ = env.token in
+      Log.discarding_last_token (T.token2terminal token);
       `Feed { env; tag = `Feed_error }
     end
     else
@@ -305,12 +304,12 @@ module Make (T : TABLE) = struct
     | T.Accept v -> `Accept v
     | Error      -> `Reject
 
-  let feed s =
+  let feed s token =
     match s.tag with
     | `Feed ->
-      { env = discard s.env; tag = `Step_run }
+      { env = discard s.env token; tag = `Step_run }
     | `Feed_error ->
-      { env = { (discard s.env) with shifted = 0 }; tag = `Step_action }
+      { env = { (discard s.env token) with shifted = 0 }; tag = `Step_action }
 
   (* --------------------------------------------------------------------------- *)
 
@@ -337,16 +336,16 @@ module Make (T : TABLE) = struct
       lexer lexbuf
     in
 
+    let { Lexing.lex_start_p; lex_curr_p } = lexbuf in
+
     (* Log our first lookahead token. *)
 
-    Log.lookahead_token lexbuf (T.token2terminal token);
+    Log.lookahead_token lex_start_p (T.token2terminal token) lex_curr_p;
 
     (* Build an initial environment. *)
 
     let env = {
-      lexer = lexer;
-      lexbuf = lexbuf;
-      token = token;
+      token = (lex_start_p, token, lex_curr_p);
       shifted = max_int;
       previouserror = max_int;
       stack = empty;
@@ -366,7 +365,9 @@ module Make (T : TABLE) = struct
         | `Accept v -> v
         | `Reject -> raise _eRR
         | `Feed p ->
-          aux (step (feed p))
+          let token = lexer lexbuf in
+          let { Lexing.lex_start_p; lex_curr_p } = lexbuf in
+          aux (step (feed p (lex_start_p, token, lex_curr_p)))
       in
       aux (run env)
 
