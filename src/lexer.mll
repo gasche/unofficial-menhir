@@ -238,6 +238,8 @@ rule main = parse
     { RIGHT }
 | "%nonassoc"
     { NONASSOC }
+| "%priorities"
+    { PRIORITIES }
 | "%start"
     { START }
 | "%prec"

@@ -1085,12 +1085,14 @@ module Precedence = struct
     | ChooseNeither
     | DontKnow
 
-  type order = Lt | Gt | Eq | Ic
+  type order = PartialOrder.order = Lt | Gt | Eq | Ic
 
   let precedence_order p1 p2 =
     match p1, p2 with
       | UndefinedPrecedence, _
-      | _, UndefinedPrecedence ->
+      | _, UndefinedPrecedence
+      | PrecedenceLevel _, ExplicitLevel _
+      | ExplicitLevel _, PrecedenceLevel _ ->
           Ic
 
       | PrecedenceLevel (m1, l1, _, _), PrecedenceLevel (m2, l2, _, _) ->
@@ -1103,6 +1105,9 @@ module Precedence = struct
               Lt
             else
               Eq
+
+      | ExplicitLevel (p1,_,_), ExplicitLevel (p2,_,_) ->
+        Priorities.compare p1 p2
 
   let shift_reduce tok prod =
     let fact1, tokp  = Terminal.precedence_level tok
