@@ -10,13 +10,13 @@
    substitutes keywords, inserts padding, etc.). *)
 
 type t = {
-    stretch_filename	: string;
-    stretch_linenum	: int;
-    stretch_linecount	: int;
-    stretch_raw_content	: string;
-    stretch_content	: string;
-    stretch_keywords	: Keyword.keyword Positions.located list
-  } 
+    stretch_filename    : string;
+    stretch_linenum     : int;
+    stretch_linecount   : int;
+    stretch_raw_content : string;
+    stretch_content     : string;
+    stretch_keywords    : Keyword.keyword Positions.located list
+  }
 
 (* An Objective Caml type is either a stretch (if it was found in some
    source file) or a string (if it was inferred via [Infer]). *)

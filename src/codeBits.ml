@@ -49,7 +49,7 @@ let scheme qs t =
   {
     quantifiers = qs;
     body = t
-  } 
+  }
 
 (* Building a type scheme with no quantifiers out of a type. *)
 

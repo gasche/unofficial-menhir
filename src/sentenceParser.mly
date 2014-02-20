@@ -7,7 +7,7 @@
 %{
 
  open Grammar
-   
+
 %}
 
 %token COLON EOF EOL
@@ -21,15 +21,15 @@
 
 sentence:
 | EOF
-    { None } 
+    { None }
 | NONTERMINAL COLON terminals EOL
     { Some (Some $1, $3) }
 | terminals EOL
     { Some (None, $1) }
 
 terminals:
-| 
-    { [] } 
+|
+    { [] }
 | TERMINAL terminals
     { $1 :: $2 }
 
