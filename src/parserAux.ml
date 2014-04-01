@@ -1,17 +1,21 @@
 open Positions
 open Syntax
 
-let current_token_precedence =
+let current_token_level =
   let c = ref 0 in
-  fun pos1 pos2 ->
-    incr c;
-    PrecedenceLevel (Error.get_filemark (), !c, pos1, pos2)
+  fun () -> incr c; !c
 
-let current_reduce_precedence =
+let current_token_precedence pos1 pos2 =
+  let c = current_token_level () in
+  PrecedenceLevel (Error.get_filemark (), c, pos1, pos2)
+
+let current_reduce_level =
   let c = ref 0 in
-  fun () ->
-    incr c;
-    PrecedenceLevel (Error.get_filemark (), !c, Lexing.dummy_pos, Lexing.dummy_pos)
+  fun () -> incr c; !c
+
+let current_reduce_precedence () =
+  let c = current_reduce_level () in
+  PrecedenceLevel (Error.get_filemark (), c, Lexing.dummy_pos, Lexing.dummy_pos)
 
 module IdSet = Set.Make (struct
   type t = identifier located

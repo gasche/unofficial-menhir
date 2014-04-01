@@ -5,7 +5,10 @@ open Syntax
 
 (* TEMPORARY document *)
 
+val current_token_precedence: unit -> int
 val current_token_precedence: Lexing.position -> Lexing.position -> precedence_level
+
+val current_reduce_level: unit -> int
 val current_reduce_precedence: unit -> precedence_level
 
 (* [check_disjunctive_production] accepts production group and checks
