@@ -72,20 +72,55 @@ let split_producers grammar producers =
   let prefix, suffix = take_suffix [] (List.rev producers) in
   List.rev prefix, List.rev suffix
 
+let kw_start = Keyword.KeywordSet.singleton
+    (Keyword.Position (Keyword.RightNamed "_default_",
+                       Keyword.WhereStart,
+                       Keyword.FlavorPosition))
+
+let kw_end = Keyword.KeywordSet.singleton
+    (Keyword.Position (Keyword.RightNamed "_default_",
+                       Keyword.WhereEnd,
+                       Keyword.FlavorPosition))
+
 let subst_by_default grammar symbol action =
   match symbol with
   | (_, None) -> action
   | (symbol, Some id) ->
-    Action.compose
-      ("_startpos_" ^ id ^ "_")
-      (Action.from_il_expr (IL.EVar "_startpos__default__"))
-      (Action.compose
-         ("_endpos_" ^ id ^ "_")
-         (Action.from_il_expr (IL.EVar "_endpos__default__"))
-         (Action.compose
-            id
-            (fst (StringMap.find symbol grammar.default_exprs))
-            action))
+    let keywords = Action.keywords action in
+    let has where =
+      Keyword.KeywordSet.mem
+        Keyword.(Position (RightNamed id, where, FlavorOffset))
+        keywords ||
+      Keyword.KeywordSet.mem
+        Keyword.(Position (RightNamed id, where, FlavorPosition))
+        keywords
+    in
+    let action =
+      Action.compose id
+        (fst (StringMap.find symbol grammar.default_exprs))
+        action
+    in
+    let action =
+      if has Keyword.WhereEnd then
+        Action.compose
+          ("_endpos_" ^ id ^ "_")
+          (Action.from_il_expr
+             ~keywords:kw_start
+             (IL.EVar "_endpos__default__"))
+          action
+      else action
+    in
+    let action =
+      if has Keyword.WhereStart then
+        Action.compose
+          ("_startpos_" ^ id ^ "_")
+          (Action.from_il_expr
+             ~keywords:kw_start
+             (IL.EVar "_startpos__default__"))
+          action
+      else action
+    in
+    action
 
 let rec expand_producers grammar action producers =
   match producers with
@@ -127,9 +162,12 @@ let expand_branch grammar branch =
             branch_reduce_precedence = fresh_precedence_level branch;
           }) expansions
 
-let expand_rule grammar rule =
-  { rule with
-    branches = List.flatten (List.map (expand_branch grammar) rule.branches) }
+let expand_rule grammar nonterminal rule =
+  if StringMap.mem nonterminal grammar.default_exprs then
+    { rule with
+      branches = List.flatten (List.map (expand_branch grammar) rule.branches) }
+  else
+    rule
 
 let check grammar =
   (* Check that all default expressions apply to valid symbols *)
@@ -153,6 +191,6 @@ let expand grammar =
   (* 1. Generate default branch for non-terminals *)
   let rules = StringMap.mapi (default_branch grammar) rules in
   (* 2. Generate new branches when possible *)
-  let rules = StringMap.map (expand_rule grammar) rules in
+  let rules = StringMap.mapi (expand_rule grammar) rules in
 
   { grammar with rules }

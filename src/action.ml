@@ -10,12 +10,8 @@ type t =
       pkeywords : Keyword.keyword Positions.located list
     }
 
-let from_il_expr expr =
-  { expr; filenames = []; pkeywords = [];
-    keywords = Keyword.KeywordSet.from_list [
-        Keyword.Position (Keyword.RightNamed "default", Keyword.WhereStart, Keyword.FlavorPosition);
-        Keyword.Position (Keyword.RightNamed "default", Keyword.WhereEnd, Keyword.FlavorPosition);
-      ] }
+let from_il_expr ?(keywords=Keyword.KeywordSet.empty) expr =
+  { expr; filenames = []; pkeywords = []; keywords }
 
 let from_stretch s =
   {
