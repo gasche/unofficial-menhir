@@ -10,6 +10,13 @@ type t =
       pkeywords : Keyword.keyword Positions.located list
     }
 
+let from_il_expr expr =
+  { expr; filenames = []; pkeywords = [];
+    keywords = Keyword.KeywordSet.from_list [
+        Keyword.Position (Keyword.RightNamed "default", Keyword.WhereStart, Keyword.FlavorPosition);
+        Keyword.Position (Keyword.RightNamed "default", Keyword.WhereEnd, Keyword.FlavorPosition);
+      ] }
+
 let from_stretch s =
   {
     expr      = IL.ETextual s;

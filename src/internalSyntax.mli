@@ -5,6 +5,7 @@ type grammar =
       p_parameters    : Stretch.t list;
       p_start_symbols : Positions.t StringMap.t;
       p_types         : (Syntax.parameter * Stretch.ocamltype Positions.located) list;
+      p_default_exprs : (Syntax.action * Positions.t) StringMap.t;
       p_tokens        : Syntax.token_properties StringMap.t;
       p_rules         : Syntax.parameterized_rule StringMap.t;
     }

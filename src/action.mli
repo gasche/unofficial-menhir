@@ -3,6 +3,8 @@
 (** Semantic action's type. *)
 type t
 
+val from_il_expr : IL.expr -> t
+
 (** [compose x a1 a2] builds the action [let x = a1 in a2]. This
     feature is used during the processing of the %inline keyword. *)
 val compose : string -> t -> t -> t

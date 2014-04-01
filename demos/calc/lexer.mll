@@ -43,6 +43,8 @@ and token = parse
     { LPAREN }
 | ')'
     { RPAREN }
+| '_'
+    { DEFAULT }
 | _
     { raise (Error (Printf.sprintf "At offset %d: unexpected character.\n" (Lexing.lexeme_start lexbuf))) }
 

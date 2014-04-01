@@ -601,6 +601,7 @@ let expand p_grammar =
     start_symbols = start_symbols;
     types         = types_from_list p_grammar.p_types;
     tokens        = p_grammar.p_tokens;
+    default_exprs = p_grammar.p_default_exprs;
     rules         =
       let closed_rules = StringMap.fold
         (fun k prule rules ->

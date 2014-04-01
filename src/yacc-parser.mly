@@ -14,6 +14,7 @@ open Positions
 
 %token TOKEN TYPE LEFT RIGHT NONASSOC PRIORITIES START PREC PUBLIC COLON BAR
 %token EOF EQUAL INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
+%token DEFAULT
 %token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE

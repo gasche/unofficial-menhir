@@ -35,6 +35,10 @@ let grammar =
   else
     grammar
 
+(* Check validity of default constructions before inlining *)
+
+let () = ExpandDefaultTerminal.check grammar
+
 (* If [--no-inline] was specified on the command line, skip the
    inlining of non terminal definitions marked with %inline. *)
 
@@ -52,6 +56,10 @@ let grammar =
   end
   else
     grammar
+
+(* Transform grammar with default constructions *)
+
+let grammar = ExpandDefaultTerminal.expand grammar
 
 (* If [--only-preprocess] or [--only-preprocess-drop] was specified on the
    command line, print the grammar and stop. Otherwise, continue. *)

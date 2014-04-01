@@ -43,5 +43,6 @@ type grammar =
       start_symbols : StringSet.t;
       types         : Stretch.ocamltype StringMap.t;
       tokens        : Syntax.token_properties StringMap.t;
+      default_exprs : (Syntax.action * Positions.t) StringMap.t;
       rules         : rule StringMap.t;
     }

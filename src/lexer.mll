@@ -250,6 +250,8 @@ rule main = parse
     { PARAMETER }
 | "%inline"
     { INLINE }
+| "%default"
+    { DEFAULT }
 | "%%"
     { let ofs = lexeme_end lexbuf in
       PERCENTPERCENT (lazy (echunk ofs)) }

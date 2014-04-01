@@ -156,6 +156,18 @@ let join_declaration filename (grammar : grammar) decl =
     Priorities.less_than pa pb;
     grammar
 
+  | DDefault (symbols, action) ->
+    let set_expr grammar symbol =
+      let position = Positions.position symbol in
+      let symbol = Positions.value symbol in
+      if StringMap.mem symbol grammar.p_default_exprs then
+        Error.errorp decl
+          (Printf.sprintf "the symbol %s has multiple default expressions." symbol);
+      { grammar with p_default_exprs = StringMap.add
+                         symbol (action, position)
+                         grammar.p_default_exprs }
+    in
+    List.fold_left set_expr grammar symbols
 
 (* ------------------------------------------------------------------------- *)
 (* This stores an optional trailer into a grammar.
@@ -600,7 +612,8 @@ let empty_grammar =
     p_start_symbols           = StringMap.empty;
     p_types                   = [];
     p_tokens                  = StringMap.empty;
-    p_rules                   = StringMap.empty
+    p_rules                   = StringMap.empty;
+    p_default_exprs           = StringMap.empty;
   }
 
 let join grammar pgrammar =

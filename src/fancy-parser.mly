@@ -18,6 +18,7 @@ open Positions
 
 %token TOKEN TYPE LEFT RIGHT NONASSOC PRIORITIES START PREC PUBLIC COLON BAR
 %token EOF EQUAL INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
+%token DEFAULT
 %token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
@@ -84,6 +85,21 @@ Syntax error in a %token declaration.
 Here are sample valid declarations:
   %token DOT SEMICOLON
   %token <string> LID UID";
+      []
+    }
+
+| DEFAULT ts = clist(symbol) e = ACTION %prec decl
+    { [ with_poss $startpos $endpos (DDefault (ts, e)) ] }
+
+| DEFAULT clist(symbol) ACTION error
+| DEFAULT clist(symbol) error
+| DEFAULT error
+    { Error.signal (Positions.two $startpos $endpos) "\
+Syntax error in a %default declaration.
+Here are sample valid declarations:
+  %default PLUS MINUS START
+  %default INT {0}
+  %default STRING IDENT {\"foobar\"}";
       []
     }
 

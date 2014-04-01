@@ -92,6 +92,10 @@ type declaration =
 
   | DPriority of terminal * terminal
 
+    (* Default value for tokens *)
+
+  | DDefault of terminal Positions.located list * action
+
 type branch_shift_precedence =
     symbol Positions.located option
 

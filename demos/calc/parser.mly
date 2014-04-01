@@ -3,6 +3,11 @@
 %token LPAREN RPAREN
 %token EOL
 
+%token DEFAULT
+%left DEFAULT
+%default LPAREN RPAREN PLUS MINUS TIMES DIV UMINUS {()}
+%default expr INT {0}
+
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS        /* highest precedence */
