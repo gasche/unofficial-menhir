@@ -209,5 +209,24 @@ let use_dollar action =
   ) (keywords action)
 
 
+let relocate_to_symbol action symbol p =
+  (* Make sure symbol is a valid identifier *)
+  assert (symbol <> "");
+  let symbol = String.copy symbol in
+  symbol.[0] <- Char.lowercase symbol.[0];
+  (* Pad content so that eventual errors are reported at the right column *)
+  let content = String.make (Positions.column p) ' ' ^ symbol in
+  (* Create a fake stretch to the target position *)
+  let stretch =
+    { Stretch.
+      stretch_filename = p.Lexing.pos_fname;
+      stretch_linenum = Positions.line p;
+      stretch_linecount = 1;
+      stretch_raw_content = content;
+      stretch_content = content;
+      stretch_keywords = [];
+    }
+  in
+  compose symbol action (from_stretch stretch)
 
 

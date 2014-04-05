@@ -163,6 +163,10 @@ let join_declaration filename (grammar : grammar) decl =
       if StringMap.mem symbol grammar.p_default_exprs then
         Error.errorp decl
           (Printf.sprintf "the symbol %s has multiple default expressions." symbol);
+      let action = Action.relocate_to_symbol
+          action
+          symbol (Positions.start_of_position position)
+      in
       { grammar with p_default_exprs = StringMap.add
                          symbol (action, position)
                          grammar.p_default_exprs }

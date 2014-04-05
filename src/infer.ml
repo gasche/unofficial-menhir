@@ -135,6 +135,7 @@ let program grammar =
 
   let bindings1, bindings2 =
     StringMap.fold (fun symbol rule (bindings1, bindings2) ->
+      let rule = ExpandDefaultTerminal.default_branch grammar symbol rule in
       List.fold_left (fun (bindings1, bindings2) branch ->
         if is_standard branch then
           (PWildcard, actiondef grammar symbol branch) :: bindings1, bindings2
