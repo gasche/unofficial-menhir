@@ -154,11 +154,13 @@ let expand_branch grammar branch =
         Error.warning [branch.branch_position]
           (Printf.sprintf "No default in the following prefix: \"%s\""
              (String.concat " " (List.map binding prefix)));
-      let expansions = expand_producers grammar branch.action branch.producers in
+      let expansions = expand_producers grammar branch.action suffix in
       branch ::
       List.map (fun (producers,action) ->
           {
-            branch with producers; action;
+            branch with
+            action;
+            producers = prefix @ producers;
             branch_reduce_precedence = fresh_precedence_level branch;
           }) expansions
 
