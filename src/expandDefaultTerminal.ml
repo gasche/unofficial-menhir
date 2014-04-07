@@ -70,7 +70,7 @@ let split_producers grammar producers =
       take_suffix (producer :: suffix)  producers
   in
   let prefix, suffix = take_suffix [] (List.rev producers) in
-  List.rev prefix, List.rev suffix
+  List.rev prefix, suffix
 
 let kw_start = Keyword.KeywordSet.singleton
     (Keyword.Position (Keyword.RightNamed "_default_",
@@ -145,7 +145,11 @@ let expand_branch grammar branch =
       Error.warning [branch.branch_position]
         (Printf.sprintf "No default applicable to branch.");
       [branch]
-    | prefix, suffix ->
+    | prefix, (s :: ss as suffix) ->
+      let prefix, suffix = match prefix with
+        | [] -> [s], ss
+        | _ -> prefix, suffix
+      in
       let binding = function
         | name, None -> name
         | name, Some id -> id ^ " = " ^ name
