@@ -180,11 +180,11 @@ module Closure (L : Lookahead.S) = struct
           num = num;
           item = item;
           epsilon_constant = constant;
-            epsilon_transmits = transmits;
+          epsilon_transmits = transmits;
           epsilon_transitions = []; (* temporary placeholder *)
           mark = Mark.none;
           predecessors = [];
-            lookahead = L.empty;
+          lookahead = L.empty;
         }
 
       )
