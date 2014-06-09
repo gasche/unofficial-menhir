@@ -463,8 +463,9 @@ and pat2 f = function
 and pat f p =
   pat2 f p
 
-and typevar f v =
-  fprintf f "'%s" v
+and typevar f = function
+  | "_" -> fprintf f "_"
+  | v -> fprintf f "'%s" v
 
 and typ0 f = function
   | TypTextual (Stretch.Declared ocamltype) ->
@@ -512,18 +513,27 @@ and scheme f scheme =
 
 let datavalparams f = function
   | [] ->
-      ()
+    ()
   | valparam :: valparams ->
-      fprintf f " of %a%a" typ1 valparam (list typ1 times) valparams
+    fprintf f "%a%a" typ1 valparam (list typ1 times) valparams
 
-let datatypeparams f = function
-  | None ->
-      ()
-  | Some typs ->
-      fprintf f "(* %a*)" (list typ space) typs (* TEMPORARY not great *)
+let datatypeparams typename f = function
+  | []   -> fprintf f "%s" typename
+  | [ty] -> fprintf f "%a %s" typ ty typename
+  | typs -> fprintf f "(%a) %s" (list typ comma) typs typename
 
-let datadef f def =
-  fprintf f "  | %s%a%a" def.dataname datavalparams def.datavalparams datatypeparams def.datatypeparams
+let datadef typename f def =
+  fprintf f "  | %s" def.dataname;
+  match def.datavalparams, def.datatypeparams with
+  | [], None -> ()
+  | [], Some typs ->
+    fprintf f " : %a" (datatypeparams typename) typs
+  | params, None ->
+    fprintf f " of %a" datavalparams def.datavalparams
+  | params, Some typs ->
+    fprintf f " : %a -> %a"
+      datavalparams def.datavalparams
+      (datatypeparams typename) typs
 
 let fielddef f def =
   fprintf f "  %s%s: %a"
@@ -531,7 +541,7 @@ let fielddef f def =
     def.fieldname
     scheme def.fieldtype
 
-let typerhs privatestr f = function
+let typerhs typename privatestr f = function
   | TDefRecord [] ->
       assert false
   | TDefRecord (field :: fields) ->
@@ -539,7 +549,7 @@ let typerhs privatestr f = function
   | TDefSum [] ->
       ()
   | TDefSum defs ->
-      fprintf f " = %s%a" privatestr (list datadef nl) defs
+      fprintf f " = %s%a" privatestr (list (datadef typename) nl) defs
   | TAbbrev t ->
       fprintf f " = %s%a" privatestr typ t
 
@@ -553,7 +563,8 @@ let typedef f def =
   fprintf f "%a%s%a%a%t%t"
     (typeparams typevar typevar) def.typeparams
     def.typename
-    (typerhs (if def.typeprivate then "private " else "")) def.typerhs
+    (typerhs def.typename (if def.typeprivate then "private " else ""))
+    def.typerhs
     typeconstraint def.typeconstraint
     nl nl
 
