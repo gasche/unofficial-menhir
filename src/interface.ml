@@ -7,42 +7,48 @@ include PreInterface
 
 let interface =
   if Settings.typed_values then
-    let nonterminaltypedef =
-      let add_nt sym ocamltype datadefs =
+    let symbolclasstypedef =
+      let add_n sym ocamltype datadefs =
         {
-          dataname = "NT'" ^ Misc.normalize sym;
-          datavalparams = [TypTextual ocamltype];
-          datatypeparams = None;
+          dataname = "N_" ^ Misc.normalize sym;
+          datavalparams = [];
+          datatypeparams = Some [ TypTextual ocamltype ];
         } :: datadefs
       in
-      let datadefs =
-        StringMap.fold add_nt
-          Front.grammar.UnparameterizedSyntax.types
-          []
+      let add_t sym properties datadefs =
+        if properties.Syntax.tk_is_declared then
+          let params = match properties.Syntax.tk_ocamltype with
+            | None   -> [ TypApp ("unit",[]) ]
+            | Some t -> [ TypTextual t ]
+          in
+          {
+            dataname = "T_" ^ sym;
+            datavalparams = [];
+            datatypeparams = Some params;
+          } :: datadefs
+        else
+          datadefs
       in
+      let datadefs = StringMap.fold add_n Front.grammar.types [] in
+      let datadefs = StringMap.fold add_t Front.grammar.tokens datadefs in
       {
-        typename = "nonterminal";
-        typeparams = [];
+        typename = "symbol_class";
+        typeparams = ["_"];
         typerhs = TDefSum datadefs;
         typeconstraint = None;
         typeprivate = false;
       }
     in
-    let valuetypedef =
+    let symboltypedef =
       {
-        typename = "sem_value";
+        typename = "symbol";
         typeparams = [];
         typerhs = TDefSum [
             {
-              dataname = "Terminal";
-              datavalparams = [TypTextual (Stretch.Inferred "token")];
-              datatypeparams = None;
+              dataname = "Symbol";
+              datavalparams = [TypApp ("symbol_class",[TypVar "a"]); TypVar "a"];
+              datatypeparams = Some [];
             };
-            {
-              dataname = "Nonterminal";
-              datavalparams = [TypTextual (Stretch.Inferred "nonterminal")];
-              datatypeparams = None;
-            }
           ];
         typeconstraint = None;
         typeprivate = false;
@@ -51,8 +57,7 @@ let interface =
     {
       PreInterface.interface with
 
-      typedecls = tokentypedef @
-                    [nonterminaltypedef; valuetypedef];
+      typedecls = tokentypedef @ [symbolclasstypedef; symboltypedef];
     }
   else
     PreInterface.interface
