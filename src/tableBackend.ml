@@ -61,6 +61,9 @@ let fpreviouserror =
 let flex_start_p =
   "Lexing.lex_start_p"
 
+let interpreter_table =
+  "MenhirInterpreterTable"
+
 let interpreter =
   "MenhirInterpreter"
 
@@ -741,6 +744,37 @@ let error_value =
 (* Here is the application of [TableInterpreter.Make]. Note that the
    exception [Error], which is defined at toplevel, is re-defined
    within the functor argument: [exception Error = Error]. *)
+let tabledef = {
+
+  modulename =
+    interpreter_table;
+
+  modulerhs =
+    MStruct {
+      struct_excdefs = [
+        excaccept; excredef;
+      ];
+      struct_typedefs = semtypedef @ [
+          tokendef2;
+        ];
+      struct_nonrecvaldefs = [
+        token2terminal;
+        define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
+        define ("error_value", error_value);
+        token2value;
+        default_reduction;
+        error;
+        action;
+        lhs;
+        goto;
+        semantic_action;
+        define ("recovery", eboolconst Settings.recovery);
+        trace;
+      ];
+    }
+
+}
+
 let application = {
 
   modulename =
@@ -749,28 +783,7 @@ let application = {
   modulerhs =
     MApp (
       MVar make,
-      MStruct {
-        struct_excdefs = [
-          excaccept; excredef;
-        ];
-        struct_typedefs = semtypedef @ [
-          tokendef2;
-        ];
-        struct_nonrecvaldefs = [
-          token2terminal;
-          define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
-          define ("error_value", error_value);
-          token2value;
-          default_reduction;
-          error;
-          action;
-          lhs;
-          goto;
-          semantic_action;
-          define ("recovery", eboolconst Settings.recovery);
-          trace;
-        ];
-      }
+      MVar interpreter_table
     );
 
 }
@@ -863,7 +876,7 @@ let program = {
     [ excvaldef ];
 
   moduledefs =
-    [ application ];
+    [ tabledef; application ];
 
   valdefs =
     api;
