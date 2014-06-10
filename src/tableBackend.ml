@@ -131,15 +131,15 @@ let reducecellcasts prod i symbol casts =
       else
         (* Project: [let id = (match id with Nonterminal (NT'... id) -> id
                                            | _ -> assert false)] *)
-        let cstr = match symbol with
-          | Symbol.T t -> "T_" ^ Terminal.print t
-          | Symbol.N n -> "N_" ^ Misc.normalize (Nonterminal.print true n)
+        let kind, cstr = match symbol with
+          | Symbol.T t -> "T", "T_" ^ Terminal.print t
+          | Symbol.N n -> "N", "N_" ^ Misc.normalize (Nonterminal.print true n)
         in
         (
           PVar id,
           EMatch (EVar id, [
-            { branchpat = PData ("Symbol", [PData (cstr, []);
-                                            PAnnot (PVar id, t)]);
+            { branchpat = PData (kind, [PData (cstr, []);
+                                        PAnnot (PVar id, t)]);
               branchbody = EVar id };
             { branchpat = PWildcard;
               branchbody = EApp (EVar "assert", [EVar "false"]) };
@@ -225,7 +225,7 @@ let reducebody prod =
           let cstr =
             "N_" ^ Misc.normalize (Nonterminal.print true (Production.nt prod))
           in
-          EData ("Symbol", [EData (cstr, []); EVar semv])
+          EData ("N", [EData (cstr, []); EVar semv])
       in
 
       EComment (
@@ -674,7 +674,7 @@ let token2value =
            | Some _ ->
              EVar semv
          in
-         EData ("Symbol", [EData ("T_" ^ Terminal.print tok, []); v]))
+         EData ("T", [EData ("T_" ^ Terminal.print tok, []); v]))
 
 (* ------------------------------------------------------------------------ *)
 
@@ -735,7 +735,7 @@ let tokendef2 = {
 
 let error_value =
   if Settings.typed_values
-  then EData ("Symbol", [EData ("Bottom",[]); EUnit])
+  then EData ("Bottom", [])
   else EApp (EVar "Obj.repr", [EUnit])
 
 (* Here is the application of [TableInterpreter.Make]. Note that the
@@ -807,8 +807,8 @@ let api : IL.valdef list =
       then
         let cstr = "N_" ^ Misc.normalize (Nonterminal.print true nt) in
         EMatch (v, [
-          { branchpat = PData ("Symbol", [PData (cstr, []);
-                                          PAnnot (PVar "result", t)]);
+          { branchpat = PData ("N", [PData (cstr, []);
+                                     PAnnot (PVar "result", t)]);
             branchbody = EVar "result"; };
           { branchpat = PWildcard;
             branchbody = EApp (EVar "assert", [EVar "false"]); };

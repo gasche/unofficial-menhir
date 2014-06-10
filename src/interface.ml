@@ -67,7 +67,7 @@ let stepvaldecl =
 let typedefs =
   PreInterface.interface.typedecls @
   if Settings.typed_values then
-    let symbolclasstypedef =
+    let symboldefs =
       let add_n sym ocamltype datadefs =
         {
           dataname = "N_" ^ Misc.normalize sym;
@@ -89,19 +89,41 @@ let typedefs =
         else
           datadefs
       in
-      let datadefs =
-        [ {
-          dataname = "Bottom";
-          datavalparams = [];
-          datatypeparams = Some [ TypApp ("unit",[]) ];
-        } ]
-      in
-      let datadefs = StringMap.fold add_n Front.grammar.types datadefs in
-      let datadefs = StringMap.fold add_t Front.grammar.tokens datadefs in
+      let n_defs = StringMap.fold add_n Front.grammar.types [] in
+      let t_defs = StringMap.fold add_t Front.grammar.tokens [] in
+      [
+        {
+          typename = "token_class";
+          typeparams = ["_"];
+          typerhs = TDefSum t_defs;
+          typeconstraint = None;
+          typeprivate = false;
+        };
+        {
+          typename = "nonterminal_class";
+          typeparams = ["_"];
+          typerhs = TDefSum n_defs;
+          typeconstraint = None;
+          typeprivate = false;
+        }
+      ]
+    in
+    let symbolclassdef =
       {
         typename = "symbol_class";
-        typeparams = ["_"];
-        typerhs = TDefSum datadefs;
+        typeparams = [];
+        typerhs = TDefSum [
+            {
+              dataname = "A_T";
+              datavalparams = [TypApp ("token_class",[TypVar "a"])];
+              datatypeparams = Some [];
+            };
+            {
+              dataname = "A_N";
+              datavalparams = [TypApp ("nonterminal_class",[TypVar "a"])];
+              datatypeparams = Some [];
+            };
+          ];
         typeconstraint = None;
         typeprivate = false;
       }
@@ -112,16 +134,26 @@ let typedefs =
         typeparams = [];
         typerhs = TDefSum [
             {
-              dataname = "Symbol";
-              datavalparams = [TypApp ("symbol_class",[TypVar "a"]); TypVar "a"];
+              dataname = "T";
+              datavalparams = [TypApp ("token_class",[TypVar "a"]); TypVar "a"];
               datatypeparams = Some [];
+            };
+            {
+              dataname = "N";
+              datavalparams = [TypApp ("nonterminal_class",[TypVar "a"]); TypVar "a"];
+              datatypeparams = Some [];
+            };
+            {
+              dataname = "Bottom";
+              datavalparams = [];
+              datatypeparams = None;
             };
           ];
         typeconstraint = None;
         typeprivate = false;
       }
     in
-    [symbolclasstypedef; symboltypedef]
+    symboldefs @ [symbolclassdef; symboltypedef]
   else if Settings.stepwise then
     [ { typename = "symbol";
         typerhs = TAbbrev (TypApp ("Obj.t", []));
