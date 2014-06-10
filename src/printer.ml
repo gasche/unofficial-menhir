@@ -660,7 +660,13 @@ let valdecl f (x, ts) =
   fprintf f "val %s: %a" x typ ts.body
 
 let rec interface f i =
-  fprintf f "%a%a%a%a%!" (excdefs true) i.excdecls typedefs i.typedecls (list valdecl nl) i.valdecls (list moddecl nl) i.moddecls
+  fprintf f "%a%a%a%a%a%!"
+    (excdefs true) i.excdecls
+    typedefs i.typedecls
+    (list valdecl nl) i.valdecls
+    (list moddecl nl) i.moddecls
+    (list output_string nl) i.intf_footer
+
 
 and moddecl f (x, i) =
   fprintf f "%tmodule %s : sig%t%a%t%tend%t"

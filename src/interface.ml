@@ -114,12 +114,12 @@ let typedefs =
         typeparams = [];
         typerhs = TDefSum [
             {
-              dataname = "A_T";
+              dataname = "CT_";
               datavalparams = [TypApp ("token_class",[TypVar "a"])];
               datatypeparams = Some [];
             };
             {
-              dataname = "A_N";
+              dataname = "CN_";
               datavalparams = [TypApp ("nonterminal_class",[TypVar "a"])];
               datatypeparams = Some [];
             };
@@ -134,12 +134,12 @@ let typedefs =
         typeparams = [];
         typerhs = TDefSum [
             {
-              dataname = "T";
+              dataname = "T_";
               datavalparams = [TypApp ("token_class",[TypVar "a"]); TypVar "a"];
               datatypeparams = Some [];
             };
             {
-              dataname = "N";
+              dataname = "N_";
               datavalparams = [TypApp ("nonterminal_class",[TypVar "a"]); TypVar "a"];
               datatypeparams = Some [];
             };
@@ -179,10 +179,27 @@ let valdecls =
       stepvaldecl @ stepentryvaldecls
     else []
 
+let querydef = [
+  "";
+  "module Query : MenhirLib.EngineTypes.QUERY_ENGINE";
+  "   with type state := state";
+  "    and type production := int";
+  "    and type producer := symbol_class";
+  "    and type semantic_action =";
+  "               (state, symbol, token) MenhirLib.EngineTypes.env ->";
+  "               (state, symbol) MenhirLib.EngineTypes.stack";
+]
+
 let interface =
   { PreInterface.interface with
     typedecls = typedecls;
     valdecls = valdecls;
+    intf_footer =
+      if Settings.typed_values then
+        querydef
+      else
+        []
+    ;
   }
 
 (* Writing the interface to a file. *)

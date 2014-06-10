@@ -165,3 +165,28 @@ module Make (T : TableFormat.TABLES)
   end
 
 end)
+
+module MakeQuery (T : TableFormat.TABLES) (Q : TableFormat.QUERY_TABLE) =
+struct
+  type state = int
+  type production = int
+  type producer = Q.producer_definition
+  type semantic_action =
+    (int, T.semantic_value, T.token) EngineTypes.env ->
+    (int, T.semantic_value) EngineTypes.stack
+
+  let state_count = Q.lr1_states
+
+  let itemset lr1 =
+    let lr0 = PackedIntArray.get Q.lr0_mapping lr1 in
+    Q.lr0_itemset.(lr0)
+
+  let production_definition prod =
+    fst Q.productions_definition.(prod)
+
+  let semantic_action prod =
+    match snd Q.productions_definition.(prod) with
+    | None -> None
+    | Some action -> Some T.semantic_action.(action)
+
+end

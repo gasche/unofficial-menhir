@@ -69,6 +69,8 @@ let interface = {
   moddecls =
     [];
 
+  intf_footer =
+    [];
 }
 
 (* Writing the interface to a file. *)

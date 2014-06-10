@@ -290,6 +290,21 @@ end
 
 (* Step-by-step execution interface *)
 
+module type QUERY_ENGINE = sig
+
+  type state
+  type production
+  type producer
+  type semantic_action
+
+  (* Valid states are numbered between [0] and [state_count-1] *)
+  val state_count: int
+
+  val itemset: state -> (production * int) list
+  val production_definition: production -> producer array
+  val semantic_action: production -> semantic_action option
+end
+
 module type STEP_ENGINE = sig
 
   type state

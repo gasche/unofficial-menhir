@@ -8,8 +8,14 @@
 (* This functor is invoked by the generated parser. *)
 
 module Make (T : TableFormat.TABLES)
+  : EngineTypes.ENGINE with type state = int
+                        and type token = T.token
+                        and type semantic_value = T.semantic_value
 
-: EngineTypes.ENGINE with type state = int
-                      and type token = T.token
-                      and type semantic_value = T.semantic_value
-
+module MakeQuery (T : TableFormat.TABLES) (Q : TableFormat.QUERY_TABLE)
+  : EngineTypes.QUERY_ENGINE with type state = int
+                              and type producer = Q.producer_definition
+                              and type production = int
+                              and type semantic_action =
+                                (int, T.semantic_value, T.token) EngineTypes.env ->
+                                (int, T.semantic_value) EngineTypes.stack

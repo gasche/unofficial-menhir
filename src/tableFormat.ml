@@ -133,3 +133,24 @@ module type TABLES = sig
 
 end
 
+(* Low-level interface needed to query the engine *)
+
+module type QUERY_TABLE = sig
+
+  val lr1_states: int
+
+  (* Mapping from lr1 state number to lr0 state number *)
+  val lr0_mapping: PackedIntArray.t
+
+  (* Mapping from lr0 state to the underlying item set.
+     An item is a pair of a production and a position in this production. *)
+  val lr0_itemset: (int * int) list array
+
+  (* A production is a pair of a producer array and an optional reduction,
+     represented by an index to an action in the [semantic_action] array.
+     A reduction can be [None] if it had been removed dead code elimination.
+  *)
+  type producer_definition
+  val productions_definition: (producer_definition array * int option) array
+
+end

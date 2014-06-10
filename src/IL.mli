@@ -51,6 +51,8 @@ and interface = {
     (* Module declarations. *)
     moddecls: (string * interface) list;
 
+    (* Raw lines to append at end of interface *)
+    intf_footer: string list;
   }
 
 and excdef = {

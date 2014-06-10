@@ -67,8 +67,16 @@ let interpreter_table =
 let interpreter =
   "MenhirInterpreter"
 
+let interpreter_query =
+  "Query"
+
 let entry =
   interpreter ^ ".entry"
+
+let typed_symbol_constructors = function
+  | Symbol.T t -> "CT_", "T_", "T_" ^ Terminal.print t
+  | Symbol.N n when Nonterminal.is_start n -> assert false
+  | Symbol.N n -> "CN_", "N_", "N_" ^ Misc.normalize (Nonterminal.print true n)
 
 (* ------------------------------------------------------------------------ *)
 
@@ -134,10 +142,7 @@ let reducecellcasts prod i symbol casts =
       else
         (* Project: [let id = (match id with Nonterminal (NT'... id) -> id
                                            | _ -> assert false)] *)
-        let kind, cstr = match symbol with
-          | Symbol.T t -> "T", "T_" ^ Terminal.print t
-          | Symbol.N n -> "N", "N_" ^ Misc.normalize (Nonterminal.print true n)
-        in
+        let _, kind, cstr = typed_symbol_constructors symbol in
         (
           PVar id,
           EMatch (EVar id, [
@@ -225,10 +230,9 @@ let reducebody prod =
         if not Settings.typed_values
          then ERepr (EVar semv)
         else
-          let cstr =
-            "N_" ^ Misc.normalize (Nonterminal.print true (Production.nt prod))
-          in
-          EData ("N", [EData (cstr, []); EVar semv])
+          let _, kind, cstr =
+            typed_symbol_constructors (Symbol.N (Production.nt prod)) in
+          EData (kind, [EData (cstr, []); EVar semv])
       in
 
       EComment (
@@ -336,6 +340,11 @@ let encode_Error =                  (* 0 *)
 
 let encode_NoError =                (* 1 *)
   1
+
+(* Querying of item sets is provided by projecting a state of the automaton to
+   its lr0 node and providing a array mapping automaton states to item list *)
+let encode_lr0 node =
+  Lr0.core (Lr1.state node)
 
 (* ------------------------------------------------------------------------ *)
 
@@ -601,10 +610,56 @@ let lhs =
     )
   )
 
+let lr0_mapping =
+  define_and_measure (
+    "lr0_mapping",
+    marshal1 (Lr1.map encode_lr0)
+  )
+
 let semantic_action =
   define (
     "semantic_action",
     EArray (Production.map semantic_action)
+  )
+
+let productions_definition =
+  let symbol_class symbol =
+    let kind, _, cstr = typed_symbol_constructors symbol in
+    EData (kind, [EData (cstr, [])])
+  in
+  let production_definition prod =
+    ETuple [
+      (* We might want to expose the corresponding non-terminal at some point
+         in the future.
+        if not (Production.is_start prod) then
+          EData ("Some", [symbol_class (Symbol.N (Production.nt prod))])
+        else
+          EData ("None", []);
+      *)
+      EArray (Array.to_list (Array.map symbol_class (Production.rhs prod)));
+      if Invariant.ever_reduced prod then
+        EData ("Some", [EIntConst (Production.p2i prod)])
+      else
+        EData ("None", [])
+    ]
+  in
+  define (
+    "productions_definition",
+    EArray (Production.map production_definition)
+  )
+
+let lr0_itemset =
+  let pack_itemset lr0 =
+    let itemset = Lr0.items lr0 in
+    let pack_item item acc =
+      let prod, pos = Item.export item in
+      ETuple [EIntConst (Production.p2i prod); EIntConst pos] :: acc
+    in
+    EList (Item.Set.fold pack_item itemset [])
+  in
+  define (
+    "lr0_itemset",
+    EArray (Array.to_list (Array.init Lr0.n pack_itemset))
   )
 
 (* ------------------------------------------------------------------------ *)
@@ -677,7 +732,8 @@ let token2value =
            | Some _ ->
              EVar semv
          in
-         EData ("T", [EData ("T_" ^ Terminal.print tok, []); v]))
+         let _, kind, cstr = typed_symbol_constructors (Symbol.T tok) in
+         EData (kind, [EData (cstr, []); v]))
 
 (* ------------------------------------------------------------------------ *)
 
@@ -736,6 +792,14 @@ let tokendef2 = {
   typeprivate = false;
 }
 
+let producerdef = {
+  typename = "producer_definition";
+  typeparams = [];
+  typerhs = TAbbrev (TypApp ("symbol_class", []));
+  typeconstraint = None;
+  typeprivate = false;
+}
+
 let error_value =
   if Settings.typed_values
   then EData ("Bottom", [])
@@ -756,11 +820,13 @@ let tabledef = {
       ];
       struct_typedefs = semtypedef @ [
           tokendef2;
+          producerdef;
         ];
       struct_nonrecvaldefs = [
         token2terminal;
         define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
         define ("error_value", error_value);
+        define ("lr1_states", EIntConst (Lr1.n));
         token2value;
         default_reduction;
         error;
@@ -768,6 +834,9 @@ let tabledef = {
         lhs;
         goto;
         semantic_action;
+        lr0_mapping;
+        lr0_itemset;
+        productions_definition;
         define ("recovery", eboolconst Settings.recovery);
         trace;
       ];
@@ -788,6 +857,21 @@ let application = {
 
 }
 
+let querydef = {
+
+  modulename =
+    interpreter_query;
+
+  modulerhs =
+    MApp (
+      MApp (
+        MVar (tableInterpreter ^ ".MakeQuery"),
+        MVar interpreter_table
+      ),
+      MVar interpreter_table
+    );
+
+}
 (* ------------------------------------------------------------------------ *)
 
 (* The client API invokes the interpreter with an appropriate start state. *)
@@ -818,10 +902,10 @@ let api : IL.valdef list =
     let project v =
       if Settings.typed_values
       then
-        let cstr = "N_" ^ Misc.normalize (Nonterminal.print true nt) in
+        let _, kind, cstr = typed_symbol_constructors (Symbol.N nt) in
         EMatch (v, [
-          { branchpat = PData ("N", [PData (cstr, []);
-                                     PAnnot (PVar "result", t)]);
+          { branchpat = PData (kind, [PData (cstr, []);
+                                      PAnnot (PVar "result", t)]);
             branchbody = EVar "result"; };
           { branchpat = PWildcard;
             branchbody = EApp (EVar "assert", [EVar "false"]); };
@@ -876,7 +960,7 @@ let program = {
     [ excvaldef ];
 
   moduledefs =
-    [ tabledef; application ];
+    [ tabledef; application; querydef ];
 
   valdefs =
     api;

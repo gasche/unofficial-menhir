@@ -75,6 +75,7 @@ let tokentypedef, tokenprefix =
         typedecls = [ tokentypedef ];
         valdecls = [];
         moddecls = [];
+        intf_footer = [];
       };
       let module P =
         Printer.Make (struct
