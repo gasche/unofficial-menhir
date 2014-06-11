@@ -24,7 +24,7 @@ let steptypdefs =
   in
   [
     { typename = "state"; typeprivate = false;
-      typerhs = TDefSum [];
+      typerhs = TAbbrev (ty "int");
       typeparams = []; typeconstraint = None };
     { typename = "feed"; typeprivate = false;
       typerhs = TAbbrev (ty "[ `Feed | `Feed_error ]");
@@ -173,7 +173,7 @@ let valdecls =
       let stepentryvaldecls =
         StringSet.fold (fun symbol decls ->
             (Misc.normalize symbol ^ "_state",
-             {quantifiers = []; body = TypApp ("state",[])}) :: decls
+             {quantifiers = []; body = ty "state"}) :: decls
           ) PreFront.grammar.start_symbols []
       in
       stepvaldecl @ stepentryvaldecls
