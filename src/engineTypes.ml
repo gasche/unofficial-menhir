@@ -292,17 +292,25 @@ end
 
 module type QUERY_ENGINE = sig
 
-  type state
+  type lr1_state = int
+  type lr0_state = int
+
   type production
   type producer
   type semantic_action
 
-  (* Valid states are numbered between [0] and [state_count-1] *)
-  val state_count: int
+  (* States are numbered from [0] to [lrx_states - 1] *)
+  val lr0_states: int
+  val lr1_states: int
 
-  val itemset: state -> (production * int) list
-  val production_definition: production -> producer array
+  (* Productions are numbered from [0] to [productions - 1] *)
+  val productions: int
+
+  val lr0_state: lr1_state -> lr0_state
+  val itemset: lr0_state -> (production * int) list
+  val production_definition: production -> producer list
   val semantic_action: production -> semantic_action option
+
 end
 
 module type STEP_ENGINE = sig

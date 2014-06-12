@@ -636,7 +636,7 @@ let productions_definition =
         else
           EData ("None", []);
       *)
-      EArray (Array.to_list (Array.map symbol_class (Production.rhs prod)));
+      EList (Array.to_list (Array.map symbol_class (Production.rhs prod)));
       if Invariant.ever_reduced prod then
         EData ("Some", [EIntConst (Production.p2i prod)])
       else
@@ -826,6 +826,7 @@ let tabledef = {
         token2terminal;
         define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
         define ("error_value", error_value);
+        define ("lr0_states", EIntConst (Lr0.n));
         define ("lr1_states", EIntConst (Lr1.n));
         token2value;
         default_reduction;

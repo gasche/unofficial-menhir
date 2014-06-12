@@ -137,6 +137,8 @@ end
 
 module type QUERY_TABLE = sig
 
+  (* Number of states in lr0 and lr1 automata *)
+  val lr0_states: int
   val lr1_states: int
 
   (* Mapping from lr1 state number to lr0 state number *)
@@ -151,6 +153,6 @@ module type QUERY_TABLE = sig
      A reduction can be [None] if it had been removed dead code elimination.
   *)
   type producer_definition
-  val productions_definition: (producer_definition array * int option) array
+  val productions_definition: (producer_definition list * int option) array
 
 end

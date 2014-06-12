@@ -13,8 +13,7 @@ module Make (T : TableFormat.TABLES)
                         and type semantic_value = T.semantic_value
 
 module MakeQuery (T : TableFormat.TABLES) (Q : TableFormat.QUERY_TABLE)
-  : EngineTypes.QUERY_ENGINE with type state = int
-                              and type producer = Q.producer_definition
+  : EngineTypes.QUERY_ENGINE with type producer = Q.producer_definition
                               and type production = int
                               and type semantic_action =
                                 (int, T.semantic_value, T.token) EngineTypes.env ->

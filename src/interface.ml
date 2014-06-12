@@ -182,8 +182,7 @@ let valdecls =
 let querydef = [
   "";
   "module Query : MenhirLib.EngineTypes.QUERY_ENGINE";
-  "   with type state := state";
-  "    and type production := int";
+  "   with type production := int";
   "    and type producer := symbol_class";
   "    and type semantic_action =";
   "               (state, symbol, token) MenhirLib.EngineTypes.env ->";
