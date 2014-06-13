@@ -629,13 +629,10 @@ let productions_definition =
   in
   let production_definition prod =
     ETuple [
-      (* We might want to expose the corresponding non-terminal at some point
-         in the future.
-        if not (Production.is_start prod) then
-          EData ("Some", [symbol_class (Symbol.N (Production.nt prod))])
-        else
-          EData ("None", []);
-      *)
+      if not (Production.is_start prod) then
+        EData ("Some", [symbol_class (Symbol.N (Production.nt prod))])
+      else
+        EData ("None", []);
       EList (Array.to_list (Array.map symbol_class (Production.rhs prod)));
       if Invariant.ever_reduced prod then
         EData ("Some", [EIntConst (Production.p2i prod)])

@@ -308,7 +308,7 @@ module type QUERY_ENGINE = sig
 
   val lr0_state: lr1_state -> lr0_state
   val itemset: lr0_state -> (production * int) list
-  val production_definition: production -> producer list
+  val production_definition: production -> producer option * producer list
   val semantic_action: production -> semantic_action option
 
 end

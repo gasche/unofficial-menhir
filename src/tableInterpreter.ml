@@ -187,11 +187,12 @@ struct
   let itemset lr0 = Q.lr0_itemset.(lr0)
 
   let production_definition prod =
-    fst Q.productions_definition.(prod)
+    let lhs, rhs, _ = Q.productions_definition.(prod) in
+    lhs, rhs
 
   let semantic_action prod =
-    match snd Q.productions_definition.(prod) with
-    | None -> None
-    | Some action -> Some T.semantic_action.(action)
+    match Q.productions_definition.(prod) with
+    | _, _, None -> None
+    | _, _, Some action -> Some T.semantic_action.(action)
 
 end
