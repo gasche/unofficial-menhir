@@ -545,13 +545,13 @@ let typerhs typename privatestr f = function
   | TDefRecord [] ->
       assert false
   | TDefRecord (field :: fields) ->
-      fprintf f " = %s{%t%a%a%t}" privatestr nl fielddef field (list fielddef seminl) fields nl
+      fprintf f " =%s {%t%a%a%t}" privatestr nl fielddef field (list fielddef seminl) fields nl
   | TDefSum [] ->
       ()
   | TDefSum defs ->
-      fprintf f " = %s%a" privatestr (list (datadef typename) nl) defs
+      fprintf f " =%s%a" privatestr (list (datadef typename) nl) defs
   | TAbbrev t ->
-      fprintf f " = %s%a" privatestr typ t
+      fprintf f " =%s %a" privatestr typ t
 
 let typeconstraint f = function
   | None ->
@@ -563,7 +563,7 @@ let typedef f def =
   fprintf f "%a%s%a%a%t%t"
     (typeparams typevar typevar) def.typeparams
     def.typename
-    (typerhs def.typename (if def.typeprivate then "private " else ""))
+    (typerhs def.typename (if def.typeprivate then " private" else ""))
     def.typerhs
     typeconstraint def.typeconstraint
     nl nl
