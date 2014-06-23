@@ -53,7 +53,7 @@ let actiondef grammar symbol branch =
      depend on the production's right-hand side. *)
 
   let _, formals =
-    List.fold_left (fun (i, formals) (symbol, ido) ->
+    List.fold_left (fun (i, formals) (symbol, ido, _) ->
       let id, startp, endp, starto, endo =
         match ido with
         | None ->

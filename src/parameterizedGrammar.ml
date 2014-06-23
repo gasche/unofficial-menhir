@@ -267,7 +267,7 @@ let check_grammar p_grammar =
       (* We only are interested by parameterized non terminals. *)
       if parameters node <> [] then
         List.fold_left (fun succs { pr_producers = symbols } ->
-          List.fold_left (fun succs -> function (_, p) ->
+          List.fold_left (fun succs -> function (_, p, _) ->
             let symbol, _ = Parameters.unapp p in
             try
               let symbol_node = conv symbol.value in
@@ -401,7 +401,7 @@ let check_grammar p_grammar =
          let check_producers () =
            List.iter
              (fun { pr_producers = symbols } -> List.iter
-                (function (_, p) ->
+                (function (_, p, _) ->
                    let symbol, actuals = Parameters.unapp p in
                    (* We take the use of each symbol into account. *)
                      check [ symbol.position ] env symbol.value
@@ -524,7 +524,7 @@ let expand p_grammar =
      instantiate the parameterized branch. *)
   let rec expand_branch subst pbranch =
     let new_producers = List.map
-      (function (ido, p) ->
+      (function (ido, p, annot) ->
          let sym, actual_parameters =
            Parameters.unapp p in
          let sym, actual_parameters =
@@ -540,8 +540,10 @@ let expand p_grammar =
            with Not_found ->
              sym, subst_parameters subst actual_parameters
          in
-           (* Instantiate the definition of the producer. *)
-           (expand_branches subst sym actual_parameters, Option.map Positions.value ido))
+         (* Instantiate the definition of the producer. *)
+         (expand_branches subst sym actual_parameters,
+          Option.map Positions.value ido,
+          annot))
       pbranch.pr_producers
     in
       {
@@ -601,6 +603,11 @@ let expand p_grammar =
     start_symbols = start_symbols;
     types         = types_from_list p_grammar.p_types;
     tokens        = p_grammar.p_tokens;
+    annot         =
+      begin match p_grammar.p_annot with
+      | Some p -> Some (Positions.value p)
+      | None -> None
+      end;
     rules         =
       let closed_rules = StringMap.fold
         (fun k prule rules ->
@@ -621,5 +628,5 @@ let expand p_grammar =
         p_grammar.p_rules
         StringMap.empty
       in
-        Hashtbl.fold StringMap.add expanded_rules closed_rules
+      Hashtbl.fold StringMap.add expanded_rules closed_rules;
   }

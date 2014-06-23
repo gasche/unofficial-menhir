@@ -18,6 +18,7 @@ open Positions
 
 %token TOKEN TYPE LEFT RIGHT NONASSOC PRIORITIES START PREC PUBLIC COLON BAR
 %token EOF EQUAL INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
+%token AT ANNOT
 %token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
@@ -174,6 +175,19 @@ Here is a sample valid declaration:
 Syntax error in a %parameter declaration.
 Here is a sample valid declaration:
   %parameter <X : sig type t end>";
+      []
+    }
+
+| ANNOT t = OCAMLTYPE
+    {
+      [ with_poss $startpos $endpos (DAnnot t) ]
+    }
+
+| ANNOT error
+    { Error.signal (Positions.two $startpos $endpos) "\
+Syntax error in a %annot declaration.
+Here is a sample valid declaration:
+  %annot <string list> { [] } ";
       []
     }
 
@@ -358,8 +372,12 @@ production:
    empty [option] or to shift. */
 
 producer:
-| id = ioption(terminated(LID, EQUAL)) p = actual_parameter
-    { id, p }
+| id = ioption(terminated(LID, EQUAL)) p = actual_parameter annot = annotation*
+    { id, p, annot }
+
+annotation:
+  AT value = ACTION
+    { value }
 
 /* ------------------------------------------------------------------------- */
 /* The syntax of actual parameters allows applications, whereas the syntax

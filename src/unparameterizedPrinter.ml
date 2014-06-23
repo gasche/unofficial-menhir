@@ -136,7 +136,7 @@ let binding mode id =
   | PrintUnitActionsUnitTokens ->
       ""
 
-let string_of_producer mode (symbol, ido) =
+let string_of_producer mode (symbol, ido, _annot) =
   Misc.o2s ido (binding mode) ^ (Misc.normalize symbol)
 
 let print_branch mode f branch =

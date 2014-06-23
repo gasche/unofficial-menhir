@@ -14,10 +14,11 @@ type 'a color =
    that can be inlined. *)
 let inline grammar =
 
-  let names producers =
-    List.fold_left (fun s -> function (_, Some x) -> StringSet.add x s | _ -> s)
-      StringSet.empty producers
+  let add_name set = function
+    | (_, Some x, _)-> StringSet.add x set
+    | (_, None, _) -> set
   in
+  let names producers = List.fold_left add_name StringSet.empty producers in
 
   (* This function returns a fresh name beginning with [prefix] and
      that is not in the set of names [names]. *)
@@ -55,31 +56,31 @@ let inline grammar =
      several branches. If it does not find one non terminal to be
      inlined, it raises [NoInlining]. *)
   let rec find_inline_producer b =
-    let prefix, nt, p, psym, suffix =
+    let prefix, nt, p, psym, annot, suffix =
       let rec chop_inline i (prefix, suffix) =
         match suffix with
           | [] ->
               raise NoInlining
 
-          | ((nt, id) as x) :: xs ->
+          | ((nt, id, annot) as x) :: xs ->
               try
                 let r = StringMap.find nt grammar.rules in
                 let id = match id with
                   | None -> "_"^string_of_int i
                   | Some id -> id
                 in
-                  if r.inline_flag then
-                    (* We have to inline the rule [r] into [b] between
-                       [prefix] and [xs]. *)
-                    List.rev prefix, nt, r, id, xs
-                  else
-                    chop_inline (i + 1) (x :: prefix, xs)
+                if r.inline_flag then
+                  (* We have to inline the rule [r] into [b] between
+                     [prefix] and [xs]. *)
+                  List.rev prefix, nt, r, id, annot, xs
+                else
+                  chop_inline (i + 1) (x :: prefix, xs)
               with Not_found ->
                 chop_inline (i + 1) (x :: prefix, xs)
       in
-        chop_inline 1 ([], b.producers)
+      chop_inline 1 ([], b.producers)
     in
-      prefix, expand_rule nt p, nt, psym, suffix
+    prefix, expand_rule nt p, nt, psym, annot,  suffix
 
   (* We have to rename producers' names of the inlined production
      if they clashes with the producers' names of the branch into
@@ -90,22 +91,25 @@ let inline grammar =
     let producers_names = names (b.producers @ producers) in
 
     (* Compute a renaming and the new inlined producers' names. *)
-    let phi, producers' =
-      List.fold_left (fun (phi, producers) -> function (p, Some x) ->
-                if StringSet.mem x producers_names then
-                  let x' = fresh producers_names x in
-                    ((x, x') :: phi, (p, Some x') :: producers)
-                else
-                  (phi, (p, Some x) :: producers)
-                | p -> phi, p :: producers) ([], []) producers
+    let append_producer (phi, producers) = function
+      | (p, Some x, annot) ->
+        if StringSet.mem x producers_names then
+          let x' = fresh producers_names x in
+          ((x, x') :: phi, (p, Some x', annot) :: producers)
+        else
+          (phi, (p, Some x, annot) :: producers)
+      | p -> phi, p :: producers
     in
-      phi, List.rev producers'
+    let phi, producers' =
+      List.fold_left append_producer ([], []) producers
+    in
+    phi, List.rev producers'
 
   (* Inline the non terminals that can be inlined in [b]. We use the
      ListMonad to combine the results. *)
   and expand_branch (b : branch) : branch ListMonad.m =
     try
-      let prefix, p, nt, psym, suffix = find_inline_producer b in
+      let prefix, p, nt, psym, annot, suffix = find_inline_producer b in
         use_inline := true;
         if Action.use_dollar b.action then
           Error.error [ b.branch_position ]
@@ -121,6 +125,9 @@ let inline grammar =
                the name of the host's producers. *)
             let phi, inlined_producers = rename_if_necessary b pb.producers in
 
+            let annotate (sym, ido, annot') = (sym, ido, annot @ annot') in
+            let inlined_producers = List.map annotate inlined_producers in
+
             (* Define the renaming environment given the shape of the branch. *)
             let renaming_env, prefix', suffix' =
 
@@ -133,23 +140,23 @@ let inline grammar =
 
                   (* If the last producer of prefix is unnamed, we cannot refer to
                      its position. We give it a name. *)
-                  | (p, None) :: ps ->
+                  | (p, None, annot') :: ps ->
                       let x = fresh (names (inlined_producers @ prefix @ suffix)) (CodeBits.prefix "p") in
-                        (Keyword.RightNamed x, Keyword.WhereEnd), List.rev ((p, Some x) :: ps)
+                        (Keyword.RightNamed x, Keyword.WhereEnd), List.rev ((p, Some x, annot') :: ps)
 
                  (* The last producer of prefix is named [x],
                     $startpos in the inlined rule will be changed to $endpos(x). *)
-                 | (_, Some x) :: _ -> (Keyword.RightNamed x, Keyword.WhereEnd), prefix
+                 | (_, Some x, _) :: _ -> (Keyword.RightNamed x, Keyword.WhereEnd), prefix
 
               in
               (* Same thing for the suffix. *)
               let end_position, suffix' =
                 match suffix with
                   | [] -> (Keyword.Left, Keyword.WhereEnd), suffix
-                  | (p, None) :: ps ->
+                  | (p, None, annot') :: ps ->
                       let x = fresh (names (inlined_producers @ prefix' @ suffix)) (CodeBits.prefix "p") in
-                        ((Keyword.RightNamed x, Keyword.WhereStart), (p, Some x) :: ps)
-                 | (_, Some x) :: _ -> (Keyword.RightNamed x, Keyword.WhereStart), suffix
+                        ((Keyword.RightNamed x, Keyword.WhereStart), (p, Some x, annot') :: ps)
+                 | (_, Some x, _) :: _ -> (Keyword.RightNamed x, Keyword.WhereStart), suffix
               in
                 (psym, start_position, end_position), prefix', suffix'
             in

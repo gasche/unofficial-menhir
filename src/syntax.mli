@@ -92,14 +92,20 @@ type declaration =
 
   | DPriority of terminal * terminal
 
+    (* Type of symbol annotations *)
+
+  | DAnnot of Stretch.ocamltype
+
 type branch_shift_precedence =
     symbol Positions.located option
 
 type branch_reduce_precedence =
     precedence_level
 
+type annotations = action list
+
 type producer =
-    identifier Positions.located option * parameter
+    identifier Positions.located option * parameter * annotations
 
 type parameterized_branch =
     {

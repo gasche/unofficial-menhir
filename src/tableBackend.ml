@@ -623,17 +623,19 @@ let semantic_action =
   )
 
 let productions_definition =
-  let symbol_class symbol =
+  let symbol_class symbol annot =
     let kind, _, cstr = typed_symbol_constructors symbol in
-    EData (kind, [EData (cstr, [])])
+    EData (kind, [EData (cstr, []); EList (List.map Action.to_il_expr annot)])
   in
   let production_definition prod =
     ETuple [
       if not (Production.is_start prod) then
-        EData ("Some", [symbol_class (Symbol.N (Production.nt prod))])
+        EData ("Some", [symbol_class (Symbol.N (Production.nt prod)) []])
       else
         EData ("None", []);
-      EList (Array.to_list (Array.map symbol_class (Production.rhs prod)));
+      EList (List.map2 symbol_class
+               (Array.to_list (Production.rhs prod))
+               (Array.to_list (Production.annotations prod)));
       if Invariant.ever_reduced prod then
         EData ("Some", [EIntConst (Production.p2i prod)])
       else

@@ -250,6 +250,8 @@ rule main = parse
     { PARAMETER }
 | "%inline"
     { INLINE }
+| "%annot"
+    { ANNOT }
 | "%%"
     { let ofs = lexeme_end lexbuf in
       PERCENTPERCENT (lazy (echunk ofs)) }
@@ -271,6 +273,8 @@ rule main = parse
     { STAR }
 | "+"
     { PLUS }
+| "@"
+    { AT }
 | (lowercase identchar *) as id
     { if Hashtbl.mem reserved id then
         Error.errorp

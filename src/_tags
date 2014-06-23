@@ -7,7 +7,7 @@
 # checkOCamlVersion needs the Str library.
 <checkOCamlVersion.byte>: use_str
 
-<sentenceParser.{ml,mli}>: use_ocamlyacc
+#<sentenceParser.{ml,mli}>: use_ocamlyacc
 
 # Build and link with -g.
 <**/*.{cmo,cmx}>:debug

@@ -108,6 +108,19 @@ let typedefs =
         }
       ]
     in
+    let annotdef =
+      let ty = match Front.grammar.annot with
+        | None -> TypApp ("unit", [])
+        | Some txt -> TypTextual txt
+      in
+      {
+        typename = "annotation";
+        typeparams = [];
+        typerhs = TAbbrev ty;
+        typeconstraint = None;
+        typeprivate = false;
+      }
+    in
     let symbolclassdef =
       {
         typename = "symbol_class";
@@ -115,12 +128,12 @@ let typedefs =
         typerhs = TDefSum [
             {
               dataname = "CT_";
-              datavalparams = [TypApp ("token_class",[TypVar "a"])];
+              datavalparams = [TypApp ("token_class",[TypVar "a"; TypApp ("annotation", [])])];
               datatypeparams = Some [];
             };
             {
               dataname = "CN_";
-              datavalparams = [TypApp ("nonterminal_class",[TypVar "a"])];
+              datavalparams = [TypApp ("nonterminal_class",[TypVar "a"; TypApp ("annotation", [])])];
               datatypeparams = Some [];
             };
           ];
@@ -153,7 +166,7 @@ let typedefs =
         typeprivate = false;
       }
     in
-    symboldefs @ [symbolclassdef; symboltypedef]
+    symboldefs @ [annotdef; symbolclassdef; symboltypedef]
   else if Settings.stepwise then
     [ { typename = "symbol";
         typerhs = TAbbrev (TypApp ("Obj.t", []));

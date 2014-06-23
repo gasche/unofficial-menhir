@@ -19,7 +19,7 @@ module IdSet = Set.Make (struct
     compare (value id1) (value id2)
 end)
 
-let defined_identifiers ((ido, _) : producer) accu =
+let defined_identifiers ((ido, _, _) : producer) accu =
   Option.fold IdSet.add ido accu
 
 let defined_identifiers (producers : producer list) =

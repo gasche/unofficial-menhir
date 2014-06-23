@@ -17,7 +17,7 @@ let rec visit grammar visited symbol =
 and visitb grammar visited { producers = symbols } =
   List.fold_left (visits grammar) visited symbols
 
-and visits grammar visited (symbol, _) =
+and visits grammar visited (symbol, _, _) =
   visit grammar visited symbol
 
 let trim grammar =

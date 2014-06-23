@@ -14,6 +14,7 @@ open Positions
 
 %token TOKEN TYPE LEFT RIGHT NONASSOC PRIORITIES START PREC PUBLIC COLON BAR
 %token EOF EQUAL INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
+%token AT ANNOT
 %token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
@@ -104,6 +105,9 @@ declaration:
 
 | PARAMETER OCAMLTYPE
     { [ unknown_pos (DParameter $2) ] }
+
+| ANNOT OCAMLTYPE
+    { [ unknown_pos (DAnnot $2) ] }
 
 optional_ocamltype:
   /* epsilon */
@@ -265,6 +269,12 @@ modifier:
 | STAR
     { unknown_pos "list" }
 
+annotations:
+  /* epsilon */
+    { [] }
+| annotations AT ACTION
+    { $3 :: $1 }
+
 /* ------------------------------------------------------------------------- */
 /* A production group consists of a list of productions, followed by a
    semantic action and an optional precedence specification. */
@@ -335,10 +345,10 @@ producers:
    binding. */
 
 producer:
-| actual_parameter
-    { None, $1 }
-| LID EQUAL actual_parameter
-    { Some $1, $3 }
+| actual_parameter annotations
+    { None, $1, List.rev $2 }
+| LID EQUAL actual_parameter annotations
+    { Some $1, $3, List.rev $4 }
 
 %%
 

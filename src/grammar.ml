@@ -426,6 +426,9 @@ module Production = struct
   let table : (Nonterminal.t * Symbol.t array) array =
     Array.make n (-1, [||])
 
+  let annotations : Syntax.annotations array array =
+    Array.make n [||]
+
   let identifiers : identifier array array =
     Array.make n [||]
 
@@ -447,6 +450,7 @@ module Production = struct
       let nt = Nonterminal.lookup nonterminal
       and nt' = Nonterminal.lookup (nonterminal ^ "'") in
       table.(k) <- (nt', [| Symbol.N nt |]);
+      annotations.(k) <- [|[]|];
       identifiers.(k) <- [| "_1" |];
       used.(k) <- [| true |];
       ntprods.(nt') <- (k, k+1);
@@ -468,8 +472,9 @@ module Production = struct
       and sprec = branch.branch_shift_precedence
       and rprec = branch.branch_reduce_precedence in
       let symbols = Array.of_list branch.producers in
-      table.(k) <- (nt, Array.map (fun (v, _) -> Symbol.lookup v) symbols);
-      identifiers.(k) <- Array.mapi (fun i (_, ido) ->
+      table.(k) <- (nt, Array.map (fun (v, _, _) -> Symbol.lookup v) symbols);
+      annotations.(k) <- Array.map (fun (_, _, annot) -> annot) symbols;
+      identifiers.(k) <- Array.mapi (fun i (_, ido, _) ->
         match ido with
         | None ->
             (* Symbols for which no name was chosen will be represented
@@ -480,7 +485,7 @@ module Production = struct
                known by that name in semantic actions. *)
             id
       ) symbols;
-      used.(k) <- Array.mapi (fun i (_, ido) ->
+      used.(k) <- Array.mapi (fun i (_, ido, _) ->
         match ido with
         | None ->
             (* A symbol referred to as [$i] is used if and only if the
@@ -541,6 +546,9 @@ module Production = struct
 
   let used prod =
     used.(prod)
+
+  let annotations prod =
+    annotations.(prod)
 
   let is_start prod =
     prod < start

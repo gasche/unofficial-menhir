@@ -18,7 +18,7 @@ open Syntax
 type branch =
     {
       branch_position          : Positions.t;
-      producers                : (symbol * identifier option) list;
+      producers                : (symbol * identifier option * annotations) list;
                                  (* TEMPORARY convention renversée par rapport
                                     à syntax.mli; faire un type record au lieu
                                     d'une paire? *)
@@ -44,4 +44,5 @@ type grammar =
       types         : Stretch.ocamltype StringMap.t;
       tokens        : Syntax.token_properties StringMap.t;
       rules         : rule StringMap.t;
+      annot         : Stretch.ocamltype option;
     }

@@ -156,6 +156,17 @@ let join_declaration filename (grammar : grammar) decl =
     Priorities.less_than pa pb;
     grammar
 
+  | DAnnot t ->
+    begin match grammar.p_annot with
+      | None ->
+        { grammar with
+          p_annot = Some (with_pos decl.position t) }
+      | Some annot ->
+        Error.error
+          [ decl.position; position annot ]
+          "%annot can only be specificied once"
+    end
+
 
 (* ------------------------------------------------------------------------- *)
 (* This stores an optional trailer into a grammar.
@@ -184,8 +195,8 @@ let rewrite_nonterminal (phi : renaming) nonterminal =
 let rewrite_parameter phi parameter =
   Parameters.map (Positions.map (Misc.support_assoc phi)) parameter
 
-let rewrite_element phi (ido, parameter) =
-  ido, rewrite_parameter phi parameter
+let rewrite_element phi (ido, parameter, annot) =
+  ido, rewrite_parameter phi parameter, annot
 
 let rewrite_branch phi ({ pr_producers = producers } as branch) =
   { branch with pr_producers = List.map (rewrite_element phi) producers }
@@ -484,7 +495,7 @@ let symbols_of grammar (pgrammar : ConcreteSyntax.grammar) =
 
     (* Analyse each branch. *)
     let symbols = List.fold_left (fun symbols branch ->
-      List.fold_left (fun symbols (_, p) ->
+      List.fold_left (fun symbols (_, p, _) ->
         let symbol, parameters = Parameters.unapp p in
         store_except_rule_parameters symbols (symbol, parameters)
       ) symbols branch.pr_producers
@@ -600,7 +611,8 @@ let empty_grammar =
     p_start_symbols           = StringMap.empty;
     p_types                   = [];
     p_tokens                  = StringMap.empty;
-    p_rules                   = StringMap.empty
+    p_rules                   = StringMap.empty;
+    p_annot                   = None;
   }
 
 let join grammar pgrammar =
@@ -622,7 +634,7 @@ let check_keywords grammar producers action =
                if i < 1 || i > length then
                  Error.errorp keyword
                    (Printf.sprintf "$%d refers to a nonexistent symbol." i);
-               let ido, param = List.nth producers (i - 1) in
+               let ido, param, _ = List.nth producers (i - 1) in
                begin
                  match ido with
                    | Some { value = id } ->
@@ -636,7 +648,7 @@ let check_keywords grammar producers action =
                let found =
                  ref false
                in
-               List.iter (fun (ido, param) ->
+               List.iter (fun (ido, param, _) ->
                  match ido with
                  | Some { value = id' } when id = id' ->
                      found := true
@@ -709,7 +721,7 @@ let check_parameterized_grammar_is_well_defined grammar =
              } -> ignore (List.fold_left
 
             (* Check the producers. *)
-            (fun already_seen (id, p) ->
+            (fun already_seen (id, p, annots) ->
                let symbol, parameters = Parameters.unapp p in
                let s = symbol.value and p = symbol.position in
                let already_seen =
@@ -725,19 +737,24 @@ let check_parameterized_grammar_is_well_defined grammar =
                        StringSet.add id.value already_seen
                in
 
-                 (* Check that the producer is defined somewhere. *)
-                 check_identifier_reference grammar prule s p;
-                 StringMap.iter (check_identifier_reference grammar prule)
-                   (List.fold_left Parameters.identifiers StringMap.empty parameters);
+               (* Check that the producer is defined somewhere. *)
+               check_identifier_reference grammar prule s p;
+               StringMap.iter (check_identifier_reference grammar prule)
+                 (List.fold_left Parameters.identifiers StringMap.empty parameters);
 
-                 (* Check the %prec is a valid reference to a token. *)
-                 (try
-                    if not ((StringMap.find s grammar.p_tokens).tk_is_declared
-                           || List.mem s reserved) then
-                      Error.errorp symbol
-                        (Printf.sprintf "%s has not been declared as a token." s)
-                  with Not_found -> ());
-                 already_seen
+               (* Check the %prec is a valid reference to a token. *)
+               (try
+                  if not ((StringMap.find s grammar.p_tokens).tk_is_declared
+                         || List.mem s reserved) then
+                    Error.errorp symbol
+                      (Printf.sprintf "%s has not been declared as a token." s)
+                with Not_found -> ());
+
+               if annots <> [] && grammar.p_annot = None then
+                 Error.errorp symbol
+                   "annotating symbols require a %annot declaration.";
+
+               already_seen
 
             ) StringSet.empty producers);
 
