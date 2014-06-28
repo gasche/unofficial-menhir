@@ -128,12 +128,12 @@ let typedefs =
         typerhs = TDefSum [
             {
               dataname = "CT_";
-              datavalparams = [TypApp ("token_class",[TypVar "a"; TypApp ("annotation", [])])];
+              datavalparams = [TypApp ("token_class",[TypVar "a"]); TypApp ("list", [TypApp ("annotation", [])])];
               datatypeparams = Some [];
             };
             {
               dataname = "CN_";
-              datavalparams = [TypApp ("nonterminal_class",[TypVar "a"; TypApp ("annotation", [])])];
+              datavalparams = [TypApp ("nonterminal_class",[TypVar "a"]); TypApp ("list", [TypApp ("annotation", [])])];
               datatypeparams = Some [];
             };
           ];
