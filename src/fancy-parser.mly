@@ -318,16 +318,18 @@ optional_bar:
 
 production_group:
   productions = separated_nonempty_list(BAR, production)
-  action = ACTION
+  action = ACTION action_annot = annotation*
   oprec2 = precedence?
     {
       ParserAux.check_production_group
         productions
         $startpos(action) $endpos(action) action;
 
-      List.map (fun (producers, oprec1, rprec, pos) -> {
+      List.map (fun (header_annot, producers, oprec1, rprec, pos) -> {
         pr_producers                = producers;
         pr_action                   = action;
+        pr_header_annot             = header_annot;
+        pr_action_annot             = action_annot;
         pr_branch_shift_precedence  = ParserAux.override pos oprec1 oprec2;
         pr_branch_reduce_precedence = rprec;
         pr_branch_position          = pos
@@ -351,8 +353,10 @@ production_group:
    precedence declaration. */
 
 production:
+  annot = annotation*
   producers = producer* oprec = precedence?
-    { producers,
+    { annot,
+      producers,
       oprec,
       ParserAux.current_reduce_precedence(),
       Positions.lex_join $startpos $endpos

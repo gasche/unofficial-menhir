@@ -623,23 +623,30 @@ let semantic_action =
   )
 
 let productions_definition =
+  let eannot annot = EList (List.map Action.to_il_expr annot) in
   let symbol_class symbol annot =
     let kind, _, cstr = typed_symbol_constructors symbol in
-    EData (kind, [EData (cstr, []); EList (List.map Action.to_il_expr annot)])
+    EData (kind, [EData (cstr, []); eannot annot])
   in
   let production_definition prod =
+    let atheader, atproducers, ataction =
+      Production.annotations prod
+    in
     ETuple [
       if not (Production.is_start prod) then
-        EData ("Some", [symbol_class (Symbol.N (Production.nt prod)) []])
+        EData ("Some", [symbol_class (Symbol.N (Production.nt prod)) atheader])
       else
         EData ("None", []);
       EList (List.map2 symbol_class
                (Array.to_list (Production.rhs prod))
-               (Array.to_list (Production.annotations prod)));
-      if Invariant.ever_reduced prod then
-        EData ("Some", [EIntConst (Production.p2i prod)])
-      else
-        EData ("None", [])
+               (Array.to_list atproducers));
+      ETuple [
+        if Invariant.ever_reduced prod then
+          EData ("Some", [EIntConst (Production.p2i prod)])
+        else
+          EData ("None", []);
+        eannot ataction
+      ]
     ]
   in
   define (
@@ -799,6 +806,14 @@ let producerdef = {
   typeprivate = false;
 }
 
+let annotdef = {
+  typename = "annotation_definition";
+  typeparams = [];
+  typerhs = TAbbrev (TypApp ("annotation", []));
+  typeconstraint = None;
+  typeprivate = false;
+}
+
 let error_value =
   if Settings.typed_values
   then EData ("Bottom", [])
@@ -820,6 +835,7 @@ let tabledef = {
       struct_typedefs = semtypedef @ [
           tokendef2;
           producerdef;
+          annotdef
         ];
       struct_nonrecvaldefs = [
         token2terminal;

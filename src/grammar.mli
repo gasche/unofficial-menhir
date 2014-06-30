@@ -269,7 +269,8 @@ module Production : sig
 
   val used: index -> bool array
 
-  val annotations: index -> Syntax.annotations array
+  val annotations: index ->
+    Syntax.annotations * Syntax.annotations array * Syntax.annotations
 
   (* This maps a production index to the production's semantic action.
      This function is not applicable to a start production. *)

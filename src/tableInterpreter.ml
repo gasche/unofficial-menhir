@@ -177,6 +177,7 @@ struct
   type semantic_action =
     (int, T.semantic_value, T.token) EngineTypes.env ->
     (int, T.semantic_value) EngineTypes.stack
+  type annotation = Q.annotation_definition
 
   let lr0_states = Q.lr0_states
   let lr1_states = Q.lr1_states
@@ -191,8 +192,9 @@ struct
     lhs, rhs
 
   let semantic_action prod =
-    match Q.productions_definition.(prod) with
-    | _, _, None -> None
-    | _, _, Some action -> Some T.semantic_action.(action)
+    let _, _, (action, annots) = Q.productions_definition.(prod) in
+    match action with
+    | None -> None, annots
+    | Some action -> Some T.semantic_action.(action), annots
 
 end

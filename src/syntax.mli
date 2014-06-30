@@ -112,6 +112,8 @@ type parameterized_branch =
       pr_branch_position          : Positions.t;
       pr_producers                : producer list;
       pr_action                   : action;
+      pr_action_annot             : annotations;
+      pr_header_annot             : annotations;
       pr_branch_shift_precedence  : branch_shift_precedence;
       pr_branch_reduce_precedence : branch_reduce_precedence
     }

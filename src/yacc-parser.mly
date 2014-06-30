@@ -269,11 +269,15 @@ modifier:
 | STAR
     { unknown_pos "list" }
 
-annotations:
+annotation_list:
   /* epsilon */
     { [] }
-| annotations AT ACTION
+| annotation_list AT ACTION
     { $3 :: $1 }
+
+annotations:
+  annotation_list
+    { List.rev $1 }
 
 /* ------------------------------------------------------------------------- */
 /* A production group consists of a list of productions, followed by a
@@ -286,17 +290,19 @@ production_groups:
     { $3 :: $1 }
 
 production_group:
-  productions ACTION /* action is lexically delimited by braces */ optional_precedence
+  productions ACTION annotations /* action is lexically delimited by braces */ optional_precedence
     {
-      let productions, action, oprec2 = $1, $2, $3 in
+      let productions, action, action_annot, oprec2 = $1, $2, $3, $4 in
 
       ParserAux.check_production_group
         productions
         (rhs_start_pos 2) (rhs_end_pos 2) action;
 
-      List.map (fun (producers, oprec1, rprec, pos) -> {
+      List.map (fun (header_annot, producers, oprec1, rprec, pos) -> {
         pr_producers                = producers;
         pr_action                   = action;
+        pr_action_annot             = action_annot;
+        pr_header_annot             = header_annot;
         pr_branch_shift_precedence  = ParserAux.override pos oprec1 oprec2;
         pr_branch_reduce_precedence = rprec;
         pr_branch_position          = pos
@@ -327,9 +333,10 @@ bar_productions:
     { $2 :: $3 }
 
 production:
-  producers optional_precedence
-    { List.rev $1,
-      $2,
+  annotations producers optional_precedence
+    { $1,
+      List.rev $2,
+      $3,
       ParserAux.current_reduce_precedence(),
       Positions.lex_join (symbol_start_pos()) (symbol_end_pos())
     }
@@ -346,9 +353,9 @@ producers:
 
 producer:
 | actual_parameter annotations
-    { None, $1, List.rev $2 }
+    { None, $1, $2 }
 | LID EQUAL actual_parameter annotations
-    { Some $1, $3, List.rev $4 }
+    { Some $1, $3, $4 }
 
 %%
 

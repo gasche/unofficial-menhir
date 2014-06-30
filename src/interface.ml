@@ -197,6 +197,7 @@ let querydef = [
   "module Query : MenhirLib.EngineTypes.QUERY_ENGINE";
   "   with type production := int";
   "    and type producer := symbol_class";
+  "    and type annotation := annotation";
   "    and type semantic_action =";
   "               (state, symbol, token) MenhirLib.EngineTypes.env ->";
   "               (state, symbol) MenhirLib.EngineTypes.stack";

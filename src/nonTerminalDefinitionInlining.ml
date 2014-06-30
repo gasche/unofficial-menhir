@@ -80,7 +80,7 @@ let inline grammar =
       in
       chop_inline 1 ([], b.producers)
     in
-    prefix, expand_rule nt p, nt, psym, annot,  suffix
+    prefix, expand_rule nt p, nt, psym, annot, suffix
 
   (* We have to rename producers' names of the inlined production
      if they clashes with the producers' names of the branch into
@@ -127,6 +127,20 @@ let inline grammar =
 
             let annotate (sym, ido, annot') = (sym, ido, annot @ annot') in
             let inlined_producers = List.map annotate inlined_producers in
+
+            (* Inline header and action annotations *)
+            let inline_annot producers inner outer =
+              match producers, inner with
+              | producers, [] -> producers, outer
+              | ((pr, ido, annots') :: prs), annots ->
+                ((pr, ido, annots @ annots') :: prs), outer
+              | [], annots -> [], annots @ outer
+            in
+            let prefix, header_annot =
+              inline_annot prefix pb.header_annot b.header_annot
+            and suffix, action_annot =
+              inline_annot suffix pb.action_annot b.action_annot
+            in
 
             (* Define the renaming environment given the shape of the branch. *)
             let renaming_env, prefix', suffix' =
@@ -176,7 +190,9 @@ let inline grammar =
 
               { b with
                   producers = prefix @ inlined_producers @ suffix;
-                  action = Action.compose psym action' outer_action
+                  action = Action.compose psym action' outer_action;
+                  action_annot;
+                  header_annot;
               }
           in
             List.map inline_branch p.branches >>= expand_branch

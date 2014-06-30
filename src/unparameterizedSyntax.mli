@@ -23,6 +23,8 @@ type branch =
                                     à syntax.mli; faire un type record au lieu
                                     d'une paire? *)
       action                   : action;
+      action_annot             : annotations;
+      header_annot             : annotations;
       branch_shift_precedence  : branch_shift_precedence;
       branch_reduce_precedence : branch_reduce_precedence
     }

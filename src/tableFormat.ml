@@ -153,8 +153,11 @@ module type QUERY_TABLE = sig
      A reduction can be [None] if it had been removed dead code elimination.
   *)
   type producer_definition
+  type annotation_definition
 
   val productions_definition:
-    (producer_definition option * producer_definition list * int option) array
+    (producer_definition option *
+     producer_definition list *
+     (int option * annotation_definition list)) array
 
 end

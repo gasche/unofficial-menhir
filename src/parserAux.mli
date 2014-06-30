@@ -14,7 +14,7 @@ val current_reduce_precedence: unit -> precedence_level
    any [$i] keyword. *)
 
 val check_production_group:
-  (producer list * 'a * 'b * 'c) list ->
+  ('a * producer list * 'b * 'c * 'd) list ->
   Lexing.position -> Lexing.position -> Action.t -> unit
 
 (* [override pos oprec1 oprec2] decides which of the two optional

@@ -298,6 +298,7 @@ module type QUERY_ENGINE = sig
   type production
   type producer
   type semantic_action
+  type annotation
 
   (* States are numbered from [0] to [lrx_states - 1] *)
   val lr0_states: int
@@ -309,7 +310,8 @@ module type QUERY_ENGINE = sig
   val lr0_state: lr1_state -> lr0_state
   val itemset: lr0_state -> (production * int) list
   val production_definition: production -> producer option * producer list
-  val semantic_action: production -> semantic_action option
+  val semantic_action: production ->
+    semantic_action option * annotation list
 
 end
 

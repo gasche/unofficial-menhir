@@ -15,6 +15,7 @@ module Make (T : TableFormat.TABLES)
 module MakeQuery (T : TableFormat.TABLES) (Q : TableFormat.QUERY_TABLE)
   : EngineTypes.QUERY_ENGINE with type producer = Q.producer_definition
                               and type production = int
+                              and type annotation = Q.annotation_definition
                               and type semantic_action =
                                 (int, T.semantic_value, T.token) EngineTypes.env ->
                                 (int, T.semantic_value) EngineTypes.stack

@@ -31,9 +31,9 @@ let check_production_group right_hand_sides pos1 pos2 action =
     match right_hand_sides with
     | [] ->
         assert false
-    | ((producers : producer list), _, _, _) :: right_hand_sides ->
+    | (_, (producers : producer list), _, _, _) :: right_hand_sides ->
         let ids = defined_identifiers producers in
-        List.iter (fun (producers, _, _, _) ->
+        List.iter (fun (_, producers, _, _, _) ->
           let ids' = defined_identifiers producers in
           try
             let id =

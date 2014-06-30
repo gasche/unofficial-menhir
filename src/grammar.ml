@@ -426,8 +426,8 @@ module Production = struct
   let table : (Nonterminal.t * Symbol.t array) array =
     Array.make n (-1, [||])
 
-  let annotations : Syntax.annotations array array =
-    Array.make n [||]
+  let annotations : (annotations * annotations array * annotations) array =
+    Array.make n ([],[||],[])
 
   let identifiers : identifier array array =
     Array.make n [||]
@@ -450,7 +450,7 @@ module Production = struct
       let nt = Nonterminal.lookup nonterminal
       and nt' = Nonterminal.lookup (nonterminal ^ "'") in
       table.(k) <- (nt', [| Symbol.N nt |]);
-      annotations.(k) <- [|[]|];
+      annotations.(k) <- [], [|[]|], [];
       identifiers.(k) <- [| "_1" |];
       used.(k) <- [| true |];
       ntprods.(nt') <- (k, k+1);
@@ -473,7 +473,10 @@ module Production = struct
       and rprec = branch.branch_reduce_precedence in
       let symbols = Array.of_list branch.producers in
       table.(k) <- (nt, Array.map (fun (v, _, _) -> Symbol.lookup v) symbols);
-      annotations.(k) <- Array.map (fun (_, _, annot) -> annot) symbols;
+      annotations.(k) <-
+        branch.header_annot,
+        Array.map (fun (_, _, annot) -> annot) symbols,
+        branch.action_annot;
       identifiers.(k) <- Array.mapi (fun i (_, ido, _) ->
         match ido with
         | None ->
