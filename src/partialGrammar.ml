@@ -348,8 +348,8 @@ let store_symbol symbols symbol kind =
 
         (* There are two definitions of the same symbol in one
            particular unit. This is forbidden. *)
-        | (PublicNonTerminal p | PrivateNonTerminal p),
-          (PublicNonTerminal p' | PrivateNonTerminal p') ->
+        | PublicNonTerminal p, PrivateNonTerminal p'
+        | PrivateNonTerminal p, PublicNonTerminal p' ->
             Error.error [ p; p']
               (Printf.sprintf
                  "the nonterminal symbol %s is multiply defined."
@@ -370,6 +370,11 @@ let store_symbol symbols symbol kind =
         (* We learn that the symbol is a non terminal or a token. *)
         | DontKnow _, _ ->
             replace_in_symbol_table symbols symbol kind
+
+        (* Extending a non-terminal with the same visibility is correct. *)
+        | PublicNonTerminal _, PublicNonTerminal _
+        | PrivateNonTerminal _, PrivateNonTerminal _ ->
+          symbols
 
   with Not_found ->
     add_in_symbol_table symbols symbol kind
