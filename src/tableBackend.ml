@@ -654,6 +654,22 @@ let productions_definition =
     EArray (Production.map production_definition)
   )
 
+let nullable_definition =
+  let branch branchpat branchbody = {branchpat; branchbody} in
+  let add_nt nt acc =
+    if Analysis.nullable nt then
+      let kind, _, cstr = typed_symbol_constructors (Symbol.N nt) in
+      branch (PData (kind, [PData (cstr, []); PWildcard])) etrue :: acc
+    else
+      acc
+  in
+  let branches = [branch PWildcard efalse] in
+  let branches = Nonterminal.foldx add_nt branches in
+  define (
+    "nullable",
+    EFun ([PVar "x"], EMatch (EVar "x", branches))
+  )
+
 let lr0_itemset =
   let pack_itemset lr0 =
     let itemset = Lr0.items lr0 in
@@ -853,6 +869,7 @@ let tabledef = {
         lr0_mapping;
         lr0_itemset;
         productions_definition;
+        nullable_definition;
         define ("recovery", eboolconst Settings.recovery);
         trace;
       ];

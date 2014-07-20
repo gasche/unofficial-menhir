@@ -312,7 +312,7 @@ module type QUERY_ENGINE = sig
   val production_definition: production -> producer option * producer list
   val semantic_action: production ->
     semantic_action option * annotation list
-
+  val nullable: producer -> bool
 end
 
 module type STEP_ENGINE = sig

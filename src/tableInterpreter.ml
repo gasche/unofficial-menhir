@@ -191,6 +191,8 @@ struct
     let lhs, rhs, _ = Q.productions_definition.(prod) in
     lhs, rhs
 
+  let nullable producer = Q.nullable producer
+
   let semantic_action prod =
     let _, _, (action, annots) = Q.productions_definition.(prod) in
     match action with

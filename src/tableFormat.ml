@@ -160,4 +160,5 @@ module type QUERY_TABLE = sig
      producer_definition list *
      (int option * annotation_definition list)) array
 
+  val nullable: producer_definition -> bool
 end

@@ -373,6 +373,7 @@ module Analysis : sig
 
   val follow: Nonterminal.t -> TerminalSet.t
 
+  val nullable: Nonterminal.t -> bool
 end
 
 (* ------------------------------------------------------------------------ *)

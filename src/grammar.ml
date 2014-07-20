@@ -1090,6 +1090,8 @@ module Analysis = struct
 
   let follow = follow
 
+  let nullable = Array.get nullable
+
 end
 
 (* ------------------------------------------------------------------------ *)
