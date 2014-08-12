@@ -806,29 +806,32 @@ let semtypedef =
       typeprivate = false;
     } ]
 
-let tokendef2 = {
-  typename = "token"; (* not [TokenType.tctoken], as it might carry an undesired prefix *)
-  typeparams = [];
-  typerhs = TAbbrev (TypApp (jeton, []));
-  typeconstraint = None;
-  typeprivate = false;
-}
+let tokendef2 = [ {
+    typename = "token"; (* not [TokenType.tctoken], as it might carry an undesired prefix *)
+    typeparams = [];
+    typerhs = TAbbrev (TypApp (jeton, []));
+    typeconstraint = None;
+    typeprivate = false;
+  } ]
 
-let producerdef = {
-  typename = "producer_definition";
-  typeparams = [];
-  typerhs = TAbbrev (TypApp ("symbol_class", []));
-  typeconstraint = None;
-  typeprivate = false;
-}
+let producerdef =
+  if Settings.typed_values then
+    [ {
+      typename = "producer_definition";
+      typeparams = [];
+      typerhs = TAbbrev (TypApp ("symbol_class", []));
+      typeconstraint = None;
+      typeprivate = false;
+    } ]
+  else []
 
-let annotdef = {
-  typename = "annotation_definition";
-  typeparams = [];
-  typerhs = TAbbrev (TypApp ("annotation", []));
-  typeconstraint = None;
-  typeprivate = false;
-}
+let annotdef = [ {
+    typename = "annotation_definition";
+    typeparams = [];
+    typerhs = TAbbrev (TypApp ("annotation", []));
+    typeconstraint = None;
+    typeprivate = false;
+  } ]
 
 let error_value =
   if Settings.typed_values
@@ -848,11 +851,12 @@ let tabledef = {
       struct_excdefs = [
         excaccept; excredef;
       ];
-      struct_typedefs = semtypedef @ [
-          tokendef2;
-          producerdef;
-          annotdef
-        ];
+      struct_typedefs = List.flatten [
+        semtypedef;
+        tokendef2;
+        producerdef;
+        annotdef;
+      ];
       struct_nonrecvaldefs = [
         token2terminal;
         define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
