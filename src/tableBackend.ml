@@ -649,10 +649,12 @@ let productions_definition =
       ]
     ]
   in
-  define (
-    "productions_definition",
-    EArray (Production.map production_definition)
-  )
+  if Settings.typed_values then
+    [ define (
+         "productions_definition",
+         EArray (Production.map production_definition)
+       ) ]
+  else []
 
 let nullable_definition =
   let branch branchpat branchbody = {branchpat; branchbody} in
@@ -663,12 +665,15 @@ let nullable_definition =
     else
       acc
   in
-  let branches = [branch PWildcard efalse] in
-  let branches = Nonterminal.foldx add_nt branches in
-  define (
-    "nullable",
-    EFun ([PVar "x"], EMatch (EVar "x", branches))
-  )
+  if Settings.typed_values then
+    let branches = [branch PWildcard efalse] in
+    let branches = Nonterminal.foldx add_nt branches in
+    [ define (
+         "nullable",
+         EFun ([PVar "x"], EMatch (EVar "x", branches))
+       ) ]
+  else
+    []
 
 let lr0_itemset =
   let pack_itemset lr0 =
@@ -825,13 +830,16 @@ let producerdef =
     } ]
   else []
 
-let annotdef = [ {
-    typename = "annotation_definition";
-    typeparams = [];
-    typerhs = TAbbrev (TypApp ("annotation", []));
-    typeconstraint = None;
-    typeprivate = false;
-  } ]
+let annotdef =
+  if Settings.typed_values then
+    [ {
+      typename = "annotation_definition";
+      typeparams = [];
+      typerhs = TAbbrev (TypApp ("annotation", []));
+      typeconstraint = None;
+      typeprivate = false;
+    } ]
+  else []
 
 let error_value =
   if Settings.typed_values
@@ -872,11 +880,11 @@ let tabledef = {
         semantic_action;
         lr0_mapping;
         lr0_itemset;
-        productions_definition;
-        nullable_definition;
         define ("recovery", eboolconst Settings.recovery);
         trace;
-      ];
+      ]
+        @ productions_definition
+        @ nullable_definition;
     }
 
 }
