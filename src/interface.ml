@@ -51,7 +51,7 @@ let stepvaldecl =
     "  [ `Step of step parser\n\
     \  | `Feed of feed parser\n\
     \  | `Accept of symbol\n\
-    \  | `Reject ]"
+    \  | `Reject of step parser ]"
   in
   [
     "initial", { quantifiers = [];
