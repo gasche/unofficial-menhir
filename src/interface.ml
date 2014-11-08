@@ -179,13 +179,14 @@ let valdecls =
       stepvaldecl @ stepentryvaldecls
     else []
 
-let querydef = [
+let querydef =
+  let token =TokenType.tctoken in [
   "";
   "module Query : MenhirLib.EngineTypes.QUERY_ENGINE";
   "   with type production := int";
   "    and type producer := symbol_class";
   "    and type semantic_action =";
-  "               (state, symbol, token) MenhirLib.EngineTypes.env ->";
+  "               (state, symbol, "^token^") MenhirLib.EngineTypes.env ->";
   "               (state, symbol) MenhirLib.EngineTypes.stack";
 ]
 
