@@ -40,7 +40,7 @@ let entryvaldecls =
 
 let steptypedef =
   let tyenv = TypApp ("MenhirLib.EngineTypes.env", [
-      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp ("token",[]);
+      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp (tctoken,[]);
     ])
   in
   [
@@ -82,7 +82,7 @@ let steptypedef =
           { dataname = "Feed";
             datavalparams = [TypArrow (TypTuple [
                 TypApp ("Lexing.position",[]);
-                TypApp ("token",[]);
+                TypApp (tctoken,[]);
                 TypApp ("Lexing.position",[]);
               ], TypApp ("step",[]))];
             datatypeparams = None
