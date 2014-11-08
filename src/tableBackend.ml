@@ -869,8 +869,9 @@ let program = {
     api;
 
   postlogue =
+    let token = TokenType.tctoken in
     [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
-        \twith type token := token\n\
+        \twith type token := "^token^"\n\
         \tand type state = int\n\
         \tand type semantic_value := MenhirInterpreter.semantic_value)" ] @
     Front.grammar.UnparameterizedSyntax.postludes
